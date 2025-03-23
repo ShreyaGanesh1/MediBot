@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}Find Doctors - HealthcareApp{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            {% if hospital %}
+                <h1><i class="fas fa-user-md me-2 text-success"></i>Doctors at {{ hospital.name }}</h1>
+                <p class="lead">Browse and connect with medical professionals at this hospital.</p>
+                <a href="{{ url_for('hospital.view_hospital', hospital_id=hospital.id) }}" class="btn btn-outline-primary mb-3">
+                    <i class="fas fa-hospital me-1"></i> Hospital Details
+                </a>
+            {% else %}
+                <h1><i class="fas fa-user-md me-2 text-success"></i>Find a Doctor</h1>
+                <p class="lead">Browse and connect with medical professionals in your area.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 bg-dark shadow">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" placeholder="Search by name, specialty, or condition..." id="doctorSearch">
+                                <button class="btn btn-primary" type="button" id="searchButton">Search</button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select" id="specialtyFilter">
+                                <option value="">All Specialties</option>
+                                <option value="Cardiology">Cardiology</option>
+                                <option value="Dermatology">Dermatology</option>
+                                <option value="Endocrinology">Endocrinology</option>
+                                <option value="Gastroenterology">Gastroenterology</option>
+                                <option value="Neurology">Neurology</option>
+                                <option value="Obstetrics">Obstetrics &amp; Gynecology</option>
+                                <option value="Oncology">Oncology</option>
+                                <option value="Ophthalmology">Ophthalmology</option>
+                                <option value="Orthopedics">Orthopedics</option>
+                                <option value="Pediatrics">Pediatrics</option>
+                                <option value="Psychiatry">Psychiatry</option>
+                                <option value="Urology">Urology</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Doctor Cards -->
+    <div class="row mb-4">
+        {% if doctors %}
+            {% for doctor in doctors %}
+                <div class="col-md-6 col-lg-4 mb-4 doctor-card">
+                    <div class="card h-100 border-0 bg-dark shadow">
+                        <div class="card-body">
+                            <h5 class="card-title mb-1">Dr. {{ doctor.name }}</h5>
+                            <h6 class="text-primary mb-3">{{ doctor.specialization }}</h6>
+                            
+                            <div class="mb-3">
+                                <span style="color: #ffc107;">
+                                    {% for i in range(5) %}
+                                        {% if i < doctor.rating|int %}
+                                            <i class="fas fa-star"></i>
+                                        {% elif i < doctor.rating %}
+                                            <i class="fas fa-star-half-alt"></i>
+                                        {% else %}
+                                            <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </span>
+                                <span class="text-muted ms-2">{{ doctor.rating }}</span>
+                            </div>
+                            
+                            <p class="card-text"><i class="fas fa-hospital text-info me-2"></i>{{ hospital.name if hospital else "Multiple hospitals" }}</p>
+                            <p class="card-text"><i class="fas fa-user-clock text-warning me-2"></i>{{ doctor.experience_years }} years experience</p>
+                                                      
+                            <div class="mt-3">
+                                <a href="{{ url_for('hospital.view_doctor', doctor_id=doctor.id) }}" class="btn btn-outline-primary me-2">
+                                    <i class="fas fa-info-circle me-1"></i>Details
+                                </a>
+                                <a href="{{ url_for('patient.chat', doctor_id=doctor.id) }}" class="btn btn-success">
+                                    <i class="fas fa-comment-medical me-1"></i>Connect
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center py-5">
+                <i class="fas fa-user-md fa-5x text-muted mb-3"></i>
+                <h3>No doctors found</h3>
+                <p>Please try adjusting your search criteria or check back later.</p>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Emergency Consult Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 bg-danger bg-opacity-10 shadow">
+                <div class="card-body text-center py-4">
+                    <h3 class="text-danger mb-3"><i class="fas fa-first-aid me-2"></i>Need an Immediate Consultation?</h3>
+                    <p class="mb-4">Connect with an available doctor right now for urgent medical advice.</p>
+                    <button id="emergencyConsultBtn" class="btn btn-danger btn-lg">
+                        <i class="fas fa-video me-2"></i>Start Emergency Consultation
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Emergency Consult Modal -->
+<div class="modal fade" id="emergencyConsultModal" tabindex="-1" aria-labelledby="emergencyConsultModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="emergencyConsultModalLabel">Emergency Consultation</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="spinner-border text-danger mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5 class="mb-3">Connecting you to the next available doctor...</h5>
+                <p class="text-muted mb-0">Please wait while we find a doctor for your urgent consultation.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filter doctors by specialty
+        document.getElementById('specialtyFilter').addEventListener('change', function() {
+            const specialty = this.value.toLowerCase();
+            const doctorCards = document.querySelectorAll('.doctor-card');
+            
+            doctorCards.forEach(card => {
+                const doctorSpecialty = card.querySelector('.text-primary').textContent.toLowerCase();
+                
+                if (!specialty || doctorSpecialty.includes(specialty)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+        
+        // Search functionality
+        document.getElementById('searchButton').addEventListener('click', function() {
+            const searchText = document.getElementById('doctorSearch').value.toLowerCase();
+            if (!searchText) return;
+            
+            const doctorCards = document.querySelectorAll('.doctor-card');
+            
+            doctorCards.forEach(card => {
+                const doctorName = card.querySelector('.card-title').textContent.toLowerCase();
+                const doctorSpecialty = card.querySelector('.text-primary').textContent.toLowerCase();
+                
+                if (doctorName.includes(searchText) || doctorSpecialty.includes(searchText)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+        
+        // Emergency consultation button
+        document.getElementById('emergencyConsultBtn').addEventListener('click', function() {
+            const modal = new bootstrap.Modal(document.getElementById('emergencyConsultModal'));
+            modal.show();
+            
+            // In a real application, this would actually connect to an available doctor
+            // For demo purposes, we'll just simulate a connection after a delay
+            setTimeout(function() {
+                window.location.href = '/patient/chat/1'; // Redirect to chat with first doctor
+            }, 3000);
+        });
+    });
+</script>
+{% endblock %}

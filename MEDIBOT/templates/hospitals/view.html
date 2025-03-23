@@ -1,0 +1,695 @@
+{% extends "base.html" %}
+
+{% block title %}{{ hospital.name }} - Hospital Details - HealthcareApp{% endblock %}
+
+{% block extra_css %}
+<style>
+    #map {
+        height: 300px;
+        width: 100%;
+        border-radius: 0.25rem;
+    }
+    
+    .rating-stars {
+        color: #ffc107;
+    }
+    
+    .doctor-card {
+        transition: transform 0.3s ease;
+    }
+    
+    .doctor-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .review-item {
+        border-left: 3px solid transparent;
+    }
+    
+    .review-item:hover {
+        border-left: 3px solid var(--bs-primary);
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+    
+    .hospital-header-image {
+        height: 250px;
+        background-size: cover;
+        background-position: center;
+        border-radius: 0.25rem;
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
+    
+    .hospital-header-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+        padding: 30px 20px 20px;
+        border-bottom-left-radius: 0.25rem;
+        border-bottom-right-radius: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-3">
+        <div class="col">
+            <a href="{{ url_for('hospital.list_hospitals') }}" class="btn btn-outline-secondary mb-3">
+                <i class="fas fa-arrow-left me-2"></i>Back to Hospitals
+            </a>
+        </div>
+    </div>
+
+    <!-- Hospital Header with Image Background -->
+    <div class="hospital-header-image" style="background-image: url('https://via.placeholder.com/1200x400?text=Hospital+Image')">
+        <div class="hospital-header-overlay">
+            <h1 class="text-white mb-2">{{ hospital.name }}</h1>
+            <div class="d-flex align-items-center mb-2">
+                <span class="rating-stars me-2">
+                    {% for i in range(5) %}
+                        {% if i < hospital.rating|int %}
+                            <i class="fas fa-star"></i>
+                        {% elif i < hospital.rating %}
+                            <i class="fas fa-star-half-alt"></i>
+                        {% else %}
+                            <i class="far fa-star"></i>
+                        {% endif %}
+                    {% endfor %}
+                </span>
+                <span class="text-white">{{ hospital.rating }} ({{ reviews|length }} reviews)</span>
+            </div>
+            <p class="text-white mb-0">
+                <i class="fas fa-map-marker-alt me-2"></i>{{ hospital.address }}
+            </p>
+        </div>
+    </div>
+
+    <!-- Main Content Section -->
+    <div class="row">
+        <!-- Left Column - Hospital Info -->
+        <div class="col-md-8 mb-4">
+            <div class="card border-0 bg-dark shadow mb-4">
+                <div class="card-header bg-info bg-opacity-10">
+                    <h5 class="mb-0 text-info"><i class="fas fa-info-circle me-2"></i>About {{ hospital.name }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-phone-alt text-success me-2"></i>Contact Information</h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">Phone: <a href="tel:{{ hospital.phone_number }}" class="text-light">{{ hospital.phone_number }}</a></li>
+                                {% if hospital.emergency_number %}
+                                    <li class="mb-2">
+                                        <span class="text-danger">Emergency: </span>
+                                        <a href="tel:{{ hospital.emergency_number }}" class="text-light">{{ hospital.emergency_number }}</a>
+                                    </li>
+                                {% endif %}
+                                {% if hospital.website %}
+                                    <li class="mb-2">Website: <a href="{{ hospital.website }}" class="text-light" target="_blank">{{ hospital.website }}</a></li>
+                                {% endif %}
+                                <li>Email: info@{{ hospital.name.lower().replace(' ', '') }}.org</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-clock text-warning me-2"></i>Operating Hours</h6>
+                            <ul class="list-unstyled mb-0">
+                                <li class="mb-2">Monday - Friday: 8:00 AM - 8:00 PM</li>
+                                <li class="mb-2">Saturday: 9:00 AM - 5:00 PM</li>
+                                <li class="mb-2">Sunday: 10:00 AM - 4:00 PM</li>
+                                <li><span class="badge bg-success">Emergency Room: 24/7</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <h6><i class="fas fa-stethoscope text-primary me-2"></i>Services</h6>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i>Emergency Care</li>
+                                <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i>Cardiology</li>
+                                <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i>Neurology</li>
+                                <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i>Orthopedics</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i>Pediatrics</li>
+                                <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i>Oncology</li>
+                                <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i>Radiology</li>
+                                <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i>Laboratory Services</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <h6><i class="fas fa-building text-secondary me-2"></i>Facilities</h6>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i>ICU</li>
+                                <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i>Operating Rooms</li>
+                                <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i>MRI & CT Scan</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i>Pharmacy</li>
+                                <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i>Cafeteria</li>
+                                <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i>Parking</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <h6><i class="fas fa-info-circle text-info me-2"></i>About Us</h6>
+                    <p>{{ hospital.name }} is a leading healthcare provider committed to delivering exceptional patient care with the latest medical technology and a highly trained medical staff. Our focus is on providing comprehensive healthcare services to our community with compassion and excellence.</p>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#shareHospitalModal">
+                            <i class="fas fa-share-alt me-1"></i> Share
+                        </button>
+                        <a href="https://maps.google.com/?q={{ hospital.latitude }},{{ hospital.longitude }}" target="_blank" class="btn btn-outline-success">
+                            <i class="fas fa-directions me-1"></i> Get Directions
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Featured Doctors -->
+            <div class="card border-0 bg-dark shadow mb-4">
+                <div class="card-header bg-primary bg-opacity-10 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-primary"><i class="fas fa-user-md me-2"></i>Featured Doctors</h5>
+                    <a href="{{ url_for('patient.doctors', hospital_id=hospital.id) }}" class="btn btn-sm btn-outline-primary">
+                        View All Doctors
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% if doctors %}
+                            {% for doctor in doctors[:3] %}
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100 border-0 bg-dark doctor-card">
+                                        <div class="card-body text-center">
+                                            <div class="rounded-circle bg-primary bg-opacity-10 mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                                <i class="fas fa-user-md text-primary fa-3x"></i>
+                                            </div>
+                                            <h5 class="card-title">Dr. {{ doctor.name }}</h5>
+                                            <h6 class="card-subtitle mb-2 text-primary">{{ doctor.specialization }}</h6>
+                                            <p class="card-text small">{{ doctor.experience_years }} years experience</p>
+                                            <div class="mb-3">
+                                                <span class="rating-stars">
+                                                    {% for i in range(5) %}
+                                                        {% if i < doctor.rating|int %}
+                                                            <i class="fas fa-star"></i>
+                                                        {% elif i < doctor.rating %}
+                                                            <i class="fas fa-star-half-alt"></i>
+                                                        {% else %}
+                                                            <i class="far fa-star"></i>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </span>
+                                            </div>
+                                            <a href="{{ url_for('hospital.view_doctor', doctor_id=doctor.id) }}" class="btn btn-sm btn-outline-primary">
+                                                View Profile
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="col-12">
+                                <div class="alert alert-info mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>No doctors information available for this hospital yet.
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Reviews Section -->
+            <div class="card border-0 bg-dark shadow">
+                <div class="card-header bg-warning bg-opacity-10 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-warning"><i class="fas fa-star me-2"></i>Patient Reviews</h5>
+                    <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#writeReviewModal">
+                        <i class="fas fa-pen me-1"></i> Write a Review
+                    </button>
+                </div>
+                <div class="card-body">
+                    {% if reviews %}
+                        <div class="row mb-4">
+                            <div class="col-md-4 text-center">
+                                <h2 class="display-4 fw-bold text-warning">{{ hospital.rating }}</h2>
+                                <div class="rating-stars mb-2">
+                                    {% for i in range(5) %}
+                                        {% if i < hospital.rating|int %}
+                                            <i class="fas fa-star"></i>
+                                        {% elif i < hospital.rating %}
+                                            <i class="fas fa-star-half-alt"></i>
+                                        {% else %}
+                                            <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <p class="text-muted">Based on {{ reviews|length }} reviews</p>
+                            </div>
+                            <div class="col-md-8">
+                                <h6 class="mb-3">Rating Distribution</h6>
+                                {% for i in range(5, 0, -1) %}
+                                    {% set count = reviews|selectattr('rating', 'equalto', i)|list|length %}
+                                    {% set percentage = (count / reviews|length) * 100 %}
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div style="width: 60px">{{ i }} stars</div>
+                                        <div class="flex-grow-1 mx-3">
+                                            <div class="progress" style="height: 8px;">
+                                                <div class="progress-bar bg-warning" style="width: {{ percentage }}%" role="progressbar" aria-valuenow="{{ percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                        </div>
+                                        <div style="width: 40px">{{ count }}</div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Review Filter -->
+                        <div class="mb-4">
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-light active" data-filter="all">All Reviews</button>
+                                <button class="btn btn-sm btn-outline-light" data-filter="5">5 Star</button>
+                                <button class="btn btn-sm btn-outline-light" data-filter="4">4 Star</button>
+                                <button class="btn btn-sm btn-outline-light" data-filter="3">3 Star</button>
+                                <button class="btn btn-sm btn-outline-light" data-filter="2">2 Star</button>
+                                <button class="btn btn-sm btn-outline-light" data-filter="1">1 Star</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Review List -->
+                        <div class="review-list">
+                            {% for review in reviews %}
+                                <div class="review-item p-3 mb-3" data-rating="{{ review.rating }}">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <div>
+                                            <h6>{{ review.user.full_name }}</h6>
+                                            <div class="rating-stars">
+                                                {% for i in range(5) %}
+                                                    <i class="{% if i < review.rating %}fas{% else %}far{% endif %} fa-star"></i>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        <div class="text-muted small">
+                                            {{ review.created_at.strftime('%b %d, %Y') }}
+                                        </div>
+                                    </div>
+                                    <p class="mb-0">{{ review.comment }}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-star fa-3x text-muted mb-3"></i>
+                            <h5>No Reviews Yet</h5>
+                            <p>Be the first to review {{ hospital.name }}</p>
+                            <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#writeReviewModal">
+                                <i class="fas fa-pen me-1"></i> Write a Review
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Column - Map and Additional Info -->
+        <div class="col-md-4">
+            <!-- Location Map -->
+            <div class="card border-0 bg-dark shadow mb-4">
+                <div class="card-header bg-danger bg-opacity-10">
+                    <h5 class="mb-0 text-danger"><i class="fas fa-map-marker-alt me-2"></i>Location</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div id="map"></div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="https://maps.google.com/?q={{ hospital.latitude }},{{ hospital.longitude }}" target="_blank" class="btn btn-outline-danger w-100">
+                        <i class="fas fa-directions me-1"></i> Get Directions
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Emergency Information -->
+            <div class="card border-0 bg-dark shadow mb-4">
+                <div class="card-header bg-danger">
+                    <h5 class="mb-0 text-white"><i class="fas fa-ambulance me-2"></i>Emergency Services</h5>
+                </div>
+                <div class="card-body">
+                    <p>{{ hospital.name }} provides 24/7 emergency medical services for critical and urgent care needs.</p>
+                    
+                    <div class="d-grid gap-2">
+                        {% if hospital.emergency_number %}
+                            <a href="tel:{{ hospital.emergency_number }}" class="btn btn-lg btn-danger">
+                                <i class="fas fa-phone-alt me-2"></i>{{ hospital.emergency_number }}
+                            </a>
+                        {% else %}
+                            <a href="tel:{{ hospital.phone_number }}" class="btn btn-lg btn-danger">
+                                <i class="fas fa-phone-alt me-2"></i>{{ hospital.phone_number }}
+                            </a>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="alert alert-danger mt-3 mb-0">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <strong>In case of life-threatening emergency:</strong> Call 911 immediately or head to the nearest emergency room.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Insurance Accepted -->
+            <div class="card border-0 bg-dark shadow mb-4">
+                <div class="card-header bg-success bg-opacity-10">
+                    <h5 class="mb-0 text-success"><i class="fas fa-shield-alt me-2"></i>Insurance Accepted</h5>
+                </div>
+                <div class="card-body">
+                    <p>This hospital accepts a wide range of insurance plans including:</p>
+                    
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i>Medicare</li>
+                        <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i>Medicaid</li>
+                        <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i>Blue Cross Blue Shield</li>
+                        <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i>Aetna</li>
+                        <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i>Cigna</li>
+                        <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i>United Healthcare</li>
+                    </ul>
+                    
+                    <div class="alert alert-success mt-3 mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Please verify your specific insurance coverage before scheduling procedures.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Appointment Request -->
+            <div class="card border-0 bg-dark shadow">
+                <div class="card-header bg-primary bg-opacity-10">
+                    <h5 class="mb-0 text-primary"><i class="fas fa-calendar-check me-2"></i>Request an Appointment</h5>
+                </div>
+                <div class="card-body">
+                    <p>Fill out the form below to request an appointment at {{ hospital.name }}.</p>
+                    
+                    <form id="appointmentRequestForm">
+                        <div class="mb-3">
+                            <label for="appointmentDepartment" class="form-label">Department/Specialty</label>
+                            <select class="form-select" id="appointmentDepartment" required>
+                                <option value="">Select Department</option>
+                                <option value="cardiology">Cardiology</option>
+                                <option value="neurology">Neurology</option>
+                                <option value="orthopedics">Orthopedics</option>
+                                <option value="pediatrics">Pediatrics</option>
+                                <option value="general">General Medicine</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="appointmentDate" class="form-label">Preferred Date</label>
+                            <input type="date" class="form-control" id="appointmentDate" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="appointmentTime" class="form-label">Preferred Time</label>
+                            <select class="form-select" id="appointmentTime" required>
+                                <option value="">Select Time</option>
+                                <option value="morning">Morning (9am - 12pm)</option>
+                                <option value="afternoon">Afternoon (1pm - 5pm)</option>
+                                <option value="evening">Evening (6pm - 8pm)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="appointmentNote" class="form-label">Reason for Visit</label>
+                            <textarea class="form-control" id="appointmentNote" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                Request Appointment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Write Review Modal -->
+<div class="modal fade" id="writeReviewModal" tabindex="-1" aria-labelledby="writeReviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="writeReviewModalLabel">Write a Review for {{ hospital.name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('hospital.review_hospital', hospital_id=hospital.id) }}">
+                    <div class="mb-3">
+                        <label class="form-label">Your Rating</label>
+                        <div class="rating-input d-flex gap-2">
+                            <div class="btn-group" role="group" aria-label="Rating">
+                                {% for i in range(1, 6) %}
+                                    <input type="radio" class="btn-check" name="rating" id="rating{{ i }}" value="{{ i }}" {% if i == 5 %}checked{% endif %}>
+                                    <label class="btn btn-outline-warning" for="rating{{ i }}">{{ i }}</label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="reviewComment" class="form-label">Your Review</label>
+                        <textarea class="form-control" id="reviewComment" name="comment" rows="4" required></textarea>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Your review helps others learn about this hospital. Please be respectful and constructive.
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-warning">Submit Review</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Share Hospital Modal -->
+<div class="modal fade" id="shareHospitalModal" tabindex="-1" aria-labelledby="shareHospitalModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="shareHospitalModalLabel">Share {{ hospital.name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Share via</label>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary flex-grow-1">
+                            <i class="fab fa-facebook-f me-2"></i>Facebook
+                        </button>
+                        <button class="btn btn-outline-info flex-grow-1">
+                            <i class="fab fa-twitter me-2"></i>Twitter
+                        </button>
+                        <button class="btn btn-outline-success flex-grow-1">
+                            <i class="fab fa-whatsapp me-2"></i>WhatsApp
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Or copy this link</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" value="{{ request.url }}" readonly id="shareLink">
+                        <button class="btn btn-outline-light" type="button" onclick="copyShareLink()">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://maps.googleapis.com/maps/api/js?key={{ config.GOOGLE_MAPS_API_KEY }}&callback=initMap" async defer></script>
+<script>
+    let map;
+    
+    function initMap() {
+        const hospitalLocation = {
+            lat: {{ hospital.latitude }},
+            lng: {{ hospital.longitude }}
+        };
+        
+        map = new google.maps.Map(document.getElementById('map'), {
+            center: hospitalLocation,
+            zoom: 15,
+            styles: [
+                {elementType: "geometry", stylers: [{color: "#242f3e"}]},
+                {elementType: "labels.text.stroke", stylers: [{color: "#242f3e"}]},
+                {elementType: "labels.text.fill", stylers: [{color: "#746855"}]},
+                {
+                    featureType: "administrative.locality",
+                    elementType: "labels.text.fill",
+                    stylers: [{color: "#d59563"}],
+                },
+                {
+                    featureType: "poi",
+                    elementType: "labels.text.fill",
+                    stylers: [{color: "#d59563"}],
+                },
+                {
+                    featureType: "poi.park",
+                    elementType: "geometry",
+                    stylers: [{color: "#263c3f"}],
+                },
+                {
+                    featureType: "poi.park",
+                    elementType: "labels.text.fill",
+                    stylers: [{color: "#6b9a76"}],
+                },
+                {
+                    featureType: "road",
+                    elementType: "geometry",
+                    stylers: [{color: "#38414e"}],
+                },
+                {
+                    featureType: "road",
+                    elementType: "geometry.stroke",
+                    stylers: [{color: "#212a37"}],
+                },
+                {
+                    featureType: "road",
+                    elementType: "labels.text.fill",
+                    stylers: [{color: "#9ca5b3"}],
+                },
+                {
+                    featureType: "road.highway",
+                    elementType: "geometry",
+                    stylers: [{color: "#746855"}],
+                },
+                {
+                    featureType: "road.highway",
+                    elementType: "geometry.stroke",
+                    stylers: [{color: "#1f2835"}],
+                },
+                {
+                    featureType: "road.highway",
+                    elementType: "labels.text.fill",
+                    stylers: [{color: "#f3d19c"}],
+                },
+                {
+                    featureType: "transit",
+                    elementType: "geometry",
+                    stylers: [{color: "#2f3948"}],
+                },
+                {
+                    featureType: "transit.station",
+                    elementType: "labels.text.fill",
+                    stylers: [{color: "#d59563"}],
+                },
+                {
+                    featureType: "water",
+                    elementType: "geometry",
+                    stylers: [{color: "#17263c"}],
+                },
+                {
+                    featureType: "water",
+                    elementType: "labels.text.fill",
+                    stylers: [{color: "#515c6d"}],
+                },
+                {
+                    featureType: "water",
+                    elementType: "labels.text.stroke",
+                    stylers: [{color: "#17263c"}],
+                },
+            ],
+        });
+        
+        // Add marker for hospital
+        const marker = new google.maps.Marker({
+            position: hospitalLocation,
+            map: map,
+            title: "{{ hospital.name }}",
+            icon: {
+                url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png"
+            }
+        });
+        
+        // Add info window
+        const infoWindow = new google.maps.InfoWindow({
+            content: `
+                <div style="color: black; max-width: 200px;">
+                    <h5>{{ hospital.name }}</h5>
+                    <p>{{ hospital.address }}</p>
+                    <p><strong>Phone:</strong> {{ hospital.phone_number }}</p>
+                </div>
+            `
+        });
+        
+        marker.addListener('click', () => {
+            infoWindow.open(map, marker);
+        });
+    }
+    
+    // Initialize review filtering
+    document.addEventListener('DOMContentLoaded', function() {
+        // Review filters
+        const filterButtons = document.querySelectorAll('[data-filter]');
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Remove active class from all buttons
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                
+                // Add active class to clicked button
+                this.classList.add('active');
+                
+                // Get filter value
+                const filterValue = this.getAttribute('data-filter');
+                
+                // Filter reviews
+                const reviews = document.querySelectorAll('.review-item');
+                reviews.forEach(review => {
+                    if (filterValue === 'all' || review.getAttribute('data-rating') === filterValue) {
+                        review.style.display = '';
+                    } else {
+                        review.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        // Appointment request form
+        const appointmentForm = document.getElementById('appointmentRequestForm');
+        if (appointmentForm) {
+            appointmentForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                alert('Your appointment request has been submitted. The hospital will contact you to confirm your appointment. (This is a demo - no actual appointment is being scheduled)');
+                this.reset();
+            });
+        }
+    });
+    
+    // Copy share link function
+    function copyShareLink() {
+        const shareLink = document.getElementById('shareLink');
+        shareLink.select();
+        document.execCommand('copy');
+        
+        // Show tooltip or alert that link was copied
+        alert('Link copied to clipboard!');
+    }
+</script>
+{% endblock %}

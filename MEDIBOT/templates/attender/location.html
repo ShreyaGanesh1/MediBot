@@ -1,0 +1,843 @@
+{% extends "base.html" %}
+
+{% block title %}Track Patient Location - HealthcareApp{% endblock %}
+
+{% block extra_css %}
+<style>
+    #map {
+        height: 500px;
+        width: 100%;
+        border-radius: 0.25rem;
+    }
+    
+    .location-card {
+        transition: all 0.3s ease;
+    }
+    
+    .location-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .history-item {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    
+    .history-item:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+    
+    .history-item.active {
+        background-color: rgba(13, 110, 253, 0.1);
+        border-left: 3px solid #0d6efd;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-3">
+        <div class="col">
+            <a href="{{ url_for('attender.dashboard') }}" class="btn btn-outline-secondary mb-3">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+            <h1><i class="fas fa-map-marker-alt me-2 text-danger"></i>Patient Location</h1>
+            <p class="lead">Track and monitor {{ patient.full_name }}'s current location and movement history.</p>
+        </div>
+    </div>
+    
+    <!-- Patient info and current location -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-4 mb-md-0">
+            <div class="card border-0 bg-dark shadow h-100">
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <div class="rounded-circle bg-primary bg-opacity-10 mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            <i class="fas fa-user text-primary fa-3x"></i>
+                        </div>
+                        <h5>{{ patient.full_name }}</h5>
+                        <p class="text-muted">{{ patient.age }} years old</p>
+                        
+                        <hr class="my-3">
+                        
+                        <div class="d-flex justify-content-center mb-3">
+                            <span class="badge {% if location %}bg-success{% else %}bg-danger{% endif %} px-3 py-2">
+                                <i class="fas {% if location %}fa-signal{% else %}fa-exclamation-triangle{% endif %} me-2"></i>
+                                {% if location %}
+                                    Online
+                                {% else %}
+                                    Offline
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    {% if location %}
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-2">Last Updated</h6>
+                            <p class="mb-0">{{ location.timestamp.strftime('%b %d, %Y at %I:%M %p') }}</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-2">Coordinates</h6>
+                            <p class="mb-0">Lat: {{ location.latitude }}, Lng: {{ location.longitude }}</p>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            No recent location data available. The patient's device may be offline.
+                        </div>
+                    {% endif %}
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <button class="btn btn-primary" id="refreshLocationBtn">
+                            <i class="fas fa-sync-alt me-2"></i>Refresh Location
+                        </button>
+                        <button class="btn btn-outline-danger" id="emergencyContactBtn">
+                            <i class="fas fa-phone-alt me-2"></i>Emergency Contact
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card border-0 bg-dark shadow">
+                <div class="card-header bg-danger bg-opacity-10 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-danger"><i class="fas fa-map-marked-alt me-2"></i>Live Location</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-danger" id="trackingModeBtn">
+                            <i class="fas fa-location-arrow me-1"></i> Live Tracking
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" id="directionsBtn">
+                            <i class="fas fa-directions me-1"></i> Get Directions
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div id="map"></div>
+                </div>
+                {% if location %}
+                    <div class="card-footer bg-transparent d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i> Location updates every 5 minutes when the patient is active.
+                        </small>
+                        <button class="btn btn-sm btn-outline-primary" id="shareLocationBtn">
+                            <i class="fas fa-share-alt me-1"></i> Share
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Location history and nearby places -->
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 bg-dark shadow h-100">
+                <div class="card-header bg-info bg-opacity-10">
+                    <h5 class="mb-0 text-info"><i class="fas fa-history me-2"></i>Location History</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush" id="locationHistory">
+                        <!-- Simulated location history entries -->
+                        <div class="list-group-item bg-transparent d-flex align-items-center py-3 history-item active" data-lat="{{ location.latitude if location else '40.7128' }}" data-lng="{{ location.longitude if location else '-74.0060' }}">
+                            <div class="me-3">
+                                <div class="rounded-circle bg-success p-2">
+                                    <i class="fas fa-map-marker-alt text-white"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">Current Location</h6>
+                                <p class="mb-0 small text-muted">{{ location.timestamp.strftime('%b %d, %Y at %I:%M %p') if location else 'No recent data' }}</p>
+                            </div>
+                            <div>
+                                <span class="badge bg-success">Active</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Sample historical locations - in a real app these would come from the database -->
+                        <div class="list-group-item bg-transparent d-flex align-items-center py-3 history-item" data-lat="{{ location.latitude - 0.002 if location else '40.7100' }}" data-lng="{{ location.longitude + 0.003 if location else '-74.0030' }}">
+                            <div class="me-3">
+                                <div class="rounded-circle bg-secondary p-2">
+                                    <i class="fas fa-map-marker-alt text-white"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Downtown Hospital</h6>
+                                <p class="mb-0 small text-muted">Today, 9:30 AM</p>
+                            </div>
+                        </div>
+                        
+                        <div class="list-group-item bg-transparent d-flex align-items-center py-3 history-item" data-lat="{{ location.latitude + 0.005 if location else '40.7200' }}" data-lng="{{ location.longitude - 0.001 if location else '-74.0080' }}">
+                            <div class="me-3">
+                                <div class="rounded-circle bg-secondary p-2">
+                                    <i class="fas fa-map-marker-alt text-white"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Home</h6>
+                                <p class="mb-0 small text-muted">Yesterday, 8:00 PM</p>
+                            </div>
+                        </div>
+                        
+                        <div class="list-group-item bg-transparent d-flex align-items-center py-3 history-item" data-lat="{{ location.latitude - 0.007 if location else '40.7050' }}" data-lng="{{ location.longitude - 0.005 if location else '-74.0110' }}">
+                            <div class="me-3">
+                                <div class="rounded-circle bg-secondary p-2">
+                                    <i class="fas fa-map-marker-alt text-white"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Pharmacy</h6>
+                                <p class="mb-0 small text-muted">Yesterday, 4:15 PM</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <button class="btn btn-sm btn-outline-info">View Complete History</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 bg-dark shadow h-100">
+                <div class="card-header bg-success bg-opacity-10">
+                    <h5 class="mb-0 text-success"><i class="fas fa-hospital me-2"></i>Nearby Healthcare Facilities</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center py-3">
+                            <div>
+                                <h6 class="mb-1">City General Hospital</h6>
+                                <p class="mb-0 small text-muted"><i class="fas fa-map-marker-alt me-2 text-danger"></i>0.8 miles away</p>
+                            </div>
+                            <div>
+                                <a href="tel:+15551234567" class="btn btn-sm btn-outline-danger me-1">
+                                    <i class="fas fa-phone-alt"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-success nearby-facility-btn" data-lat="40.7135" data-lng="-74.0030" data-name="City General Hospital">
+                                    <i class="fas fa-directions"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center py-3">
+                            <div>
+                                <h6 class="mb-1">MediQuick Urgent Care</h6>
+                                <p class="mb-0 small text-muted"><i class="fas fa-map-marker-alt me-2 text-danger"></i>1.2 miles away</p>
+                            </div>
+                            <div>
+                                <a href="tel:+15551234568" class="btn btn-sm btn-outline-danger me-1">
+                                    <i class="fas fa-phone-alt"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-success nearby-facility-btn" data-lat="40.7200" data-lng="-74.0110" data-name="MediQuick Urgent Care">
+                                    <i class="fas fa-directions"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center py-3">
+                            <div>
+                                <h6 class="mb-1">Wellness Pharmacy</h6>
+                                <p class="mb-0 small text-muted"><i class="fas fa-map-marker-alt me-2 text-danger"></i>0.5 miles away</p>
+                            </div>
+                            <div>
+                                <a href="tel:+15551234569" class="btn btn-sm btn-outline-danger me-1">
+                                    <i class="fas fa-phone-alt"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-success nearby-facility-btn" data-lat="40.7090" data-lng="-74.0070" data-name="Wellness Pharmacy">
+                                    <i class="fas fa-directions"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <button class="btn btn-sm btn-outline-success" id="showMoreNearbyBtn">Show More</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Emergency Contact Modal -->
+<div class="modal fade" id="emergencyContactModal" tabindex="-1" aria-labelledby="emergencyContactModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="emergencyContactModalLabel"><i class="fas fa-exclamation-triangle me-2"></i>Emergency Contact</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>If this is a medical emergency, please call emergency services immediately.</p>
+                
+                <div class="d-grid gap-2 mb-3">
+                    <a href="tel:911" class="btn btn-danger">
+                        <i class="fas fa-phone-alt me-2"></i>Call 911
+                    </a>
+                </div>
+                
+                <h6 class="mb-3">{{ patient.full_name }}'s Emergency Contacts:</h6>
+                
+                <div class="list-group list-group-flush mb-3">
+                    <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">John Smith (Primary)</h6>
+                            <p class="mb-0 small text-muted">Spouse</p>
+                        </div>
+                        <a href="tel:+15551234570" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-phone-alt"></i>
+                        </a>
+                    </div>
+                    
+                    <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">Sarah Johnson</h6>
+                            <p class="mb-0 small text-muted">Daughter</p>
+                        </div>
+                        <a href="tel:+15551234571" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-phone-alt"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="notifyEmergencyContacts">
+                    <label class="form-check-label" for="notifyEmergencyContacts">
+                        Send emergency alert to all contacts
+                    </label>
+                </div>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="shareLocationWithEmergency">
+                    <label class="form-check-label" for="shareLocationWithEmergency">
+                        Share current location with emergency services
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="sendEmergencyAlertBtn">Send Emergency Alert</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Share Location Modal -->
+<div class="modal fade" id="shareLocationModal" tabindex="-1" aria-labelledby="shareLocationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="shareLocationModalLabel">Share Patient Location</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="shareRecipient" class="form-label">Share with</label>
+                    <select class="form-select" id="shareRecipient">
+                        <option value="">Select recipient</option>
+                        <option value="doctor">Dr. Michael Chen (Primary Physician)</option>
+                        <option value="emergency">Emergency Services</option>
+                        <option value="family">Family Members</option>
+                        <option value="other">Other Caretaker</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="shareMethod" class="form-label">Share via</label>
+                    <select class="form-select" id="shareMethod">
+                        <option value="app">HealthcareApp</option>
+                        <option value="email">Email</option>
+                        <option value="sms">SMS</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="shareNotes" class="form-label">Add a note (optional)</label>
+                    <textarea class="form-control" id="shareNotes" rows="3" placeholder="Add any relevant information..."></textarea>
+                </div>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="includeLocationHistory">
+                    <label class="form-check-label" for="includeLocationHistory">
+                        Include location history for the past 24 hours
+                    </label>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Sharing patient location is logged and will be visible to the patient.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmShareLocationBtn">Share Location</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://maps.googleapis.com/maps/api/js?key={{ config.GOOGLE_MAPS_API_KEY }}&callback=initMap" async defer></script>
+<script src="{{ url_for('static', filename='js/location.js') }}"></script>
+<script>
+    let map;
+    let patientMarker;
+    let markers = [];
+    let directionsService;
+    let directionsRenderer;
+    let patientLocation = {
+        lat: {{ location.latitude if location else '40.7128' }},
+        lng: {{ location.longitude if location else '-74.0060' }}
+    };
+    
+    function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+            center: patientLocation,
+            zoom: 14,
+            styles: [
+                { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+                { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+                { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+                {
+                    featureType: "administrative.locality",
+                    elementType: "labels.text.fill",
+                    stylers: [{ color: "#d59563" }],
+                },
+                {
+                    featureType: "poi",
+                    elementType: "labels.text.fill",
+                    stylers: [{ color: "#d59563" }],
+                },
+                {
+                    featureType: "poi.park",
+                    elementType: "geometry",
+                    stylers: [{ color: "#263c3f" }],
+                },
+                {
+                    featureType: "poi.park",
+                    elementType: "labels.text.fill",
+                    stylers: [{ color: "#6b9a76" }],
+                },
+                {
+                    featureType: "road",
+                    elementType: "geometry",
+                    stylers: [{ color: "#38414e" }],
+                },
+                {
+                    featureType: "road",
+                    elementType: "geometry.stroke",
+                    stylers: [{ color: "#212a37" }],
+                },
+                {
+                    featureType: "road",
+                    elementType: "labels.text.fill",
+                    stylers: [{ color: "#9ca5b3" }],
+                },
+                {
+                    featureType: "road.highway",
+                    elementType: "geometry",
+                    stylers: [{ color: "#746855" }],
+                },
+                {
+                    featureType: "road.highway",
+                    elementType: "geometry.stroke",
+                    stylers: [{ color: "#1f2835" }],
+                },
+                {
+                    featureType: "road.highway",
+                    elementType: "labels.text.fill",
+                    stylers: [{ color: "#f3d19c" }],
+                },
+                {
+                    featureType: "transit",
+                    elementType: "geometry",
+                    stylers: [{ color: "#2f3948" }],
+                },
+                {
+                    featureType: "transit.station",
+                    elementType: "labels.text.fill",
+                    stylers: [{ color: "#d59563" }],
+                },
+                {
+                    featureType: "water",
+                    elementType: "geometry",
+                    stylers: [{ color: "#17263c" }],
+                },
+                {
+                    featureType: "water",
+                    elementType: "labels.text.fill",
+                    stylers: [{ color: "#515c6d" }],
+                },
+                {
+                    featureType: "water",
+                    elementType: "labels.text.stroke",
+                    stylers: [{ color: "#17263c" }],
+                },
+            ]
+        });
+        
+        // Patient marker with custom icon
+        patientMarker = new google.maps.Marker({
+            position: patientLocation,
+            map: map,
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 12,
+                fillColor: "#dc3545",
+                fillOpacity: 1,
+                strokeColor: "#FFFFFF",
+                strokeWeight: 2
+            },
+            title: "{{ patient.full_name }}'s Location"
+        });
+        
+        // Add info window to patient marker
+        const infoWindow = new google.maps.InfoWindow({
+            content: `
+                <div style="color: black;">
+                    <h5>{{ patient.full_name }}</h5>
+                    <p>Last updated: {{ location.timestamp.strftime('%I:%M %p') if location else 'No recent data' }}</p>
+                </div>
+            `
+        });
+        
+        patientMarker.addListener('click', () => {
+            infoWindow.open(map, patientMarker);
+        });
+        
+        // Initialize directions service
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer({
+            map: map,
+            suppressMarkers: true,
+            polylineOptions: {
+                strokeColor: '#0d6efd',
+                strokeWeight: 5
+            }
+        });
+        
+        // Add nearby facilities markers
+        addNearbyFacilities();
+    }
+    
+    function addNearbyFacilities() {
+        // City General Hospital
+        addMarker({
+            lat: 40.7135,
+            lng: -74.0030
+        }, "City General Hospital", "hospital");
+        
+        // MediQuick Urgent Care
+        addMarker({
+            lat: 40.7200,
+            lng: -74.0110
+        }, "MediQuick Urgent Care", "medicalcenter");
+        
+        // Wellness Pharmacy
+        addMarker({
+            lat: 40.7090,
+            lng: -74.0070
+        }, "Wellness Pharmacy", "pharmacy");
+    }
+    
+    function addMarker(position, title, type) {
+        // Choose icon based on type
+        let iconUrl;
+        switch(type) {
+            case "hospital":
+                iconUrl = "https://maps.google.com/mapfiles/ms/icons/blue-dot.png";
+                break;
+            case "pharmacy":
+                iconUrl = "https://maps.google.com/mapfiles/ms/icons/green-dot.png";
+                break;
+            case "medicalcenter":
+                iconUrl = "https://maps.google.com/mapfiles/ms/icons/yellow-dot.png";
+                break;
+            default:
+                iconUrl = "https://maps.google.com/mapfiles/ms/icons/red-dot.png";
+        }
+        
+        const marker = new google.maps.Marker({
+            position: position,
+            map: map,
+            title: title,
+            icon: {
+                url: iconUrl
+            }
+        });
+        
+        // Add info window
+        const infoWindow = new google.maps.InfoWindow({
+            content: `
+                <div style="color: black;">
+                    <h5>${title}</h5>
+                    <p>Type: ${type.charAt(0).toUpperCase() + type.slice(1)}</p>
+                    <button onclick="getDirectionsTo(${position.lat}, ${position.lng}, '${title}')" style="color: black;">Get Directions</button>
+                </div>
+            `
+        });
+        
+        marker.addListener('click', () => {
+            infoWindow.open(map, marker);
+        });
+        
+        markers.push(marker);
+    }
+    
+    function getDirectionsTo(lat, lng, destinationName) {
+        const destination = new google.maps.LatLng(lat, lng);
+        const origin = new google.maps.LatLng(patientLocation.lat, patientLocation.lng);
+        
+        directionsService.route(
+            {
+                origin: origin,
+                destination: destination,
+                travelMode: google.maps.TravelMode.DRIVING
+            },
+            (response, status) => {
+                if (status === "OK") {
+                    directionsRenderer.setDirections(response);
+                    
+                    // Get route information
+                    const route = response.routes[0];
+                    const leg = route.legs[0];
+                    
+                    // Alert with directions info
+                    alert(`Directions to ${destinationName}\nDistance: ${leg.distance.text}\nEstimated time: ${leg.duration.text}`);
+                } else {
+                    alert("Directions request failed due to " + status);
+                }
+            }
+        );
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Location history item click
+        const historyItems = document.querySelectorAll('.history-item');
+        historyItems.forEach(item => {
+            item.addEventListener('click', function() {
+                // Remove active class from all items
+                historyItems.forEach(i => i.classList.remove('active'));
+                // Add active class to clicked item
+                this.classList.add('active');
+                
+                // Get lat/lng from data attributes
+                const lat = parseFloat(this.getAttribute('data-lat'));
+                const lng = parseFloat(this.getAttribute('data-lng'));
+                
+                // Center map on this location
+                map.setCenter({lat, lng});
+                map.setZoom(16);
+                
+                // Update patient marker position
+                patientMarker.setPosition({lat, lng});
+                
+                // Clear any directions
+                directionsRenderer.setDirections({routes: []});
+            });
+        });
+        
+        // Nearby facility buttons
+        document.querySelectorAll('.nearby-facility-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const lat = parseFloat(this.getAttribute('data-lat'));
+                const lng = parseFloat(this.getAttribute('data-lng'));
+                const name = this.getAttribute('data-name');
+                
+                getDirectionsTo(lat, lng, name);
+            });
+        });
+        
+        // Emergency contact button
+        document.getElementById('emergencyContactBtn').addEventListener('click', function() {
+            const modal = new bootstrap.Modal(document.getElementById('emergencyContactModal'));
+            modal.show();
+        });
+        
+        // Share location button
+        document.getElementById('shareLocationBtn').addEventListener('click', function() {
+            const modal = new bootstrap.Modal(document.getElementById('shareLocationModal'));
+            modal.show();
+        });
+        
+        // Confirm share location button
+        document.getElementById('confirmShareLocationBtn').addEventListener('click', function() {
+            const recipient = document.getElementById('shareRecipient').value;
+            const method = document.getElementById('shareMethod').value;
+            
+            if (!recipient) {
+                alert('Please select a recipient');
+                return;
+            }
+            
+            alert(`Location shared with ${document.getElementById('shareRecipient').options[document.getElementById('shareRecipient').selectedIndex].text} via ${document.getElementById('shareMethod').options[document.getElementById('shareMethod').selectedIndex].text}`);
+            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('shareLocationModal'));
+            modal.hide();
+        });
+        
+        // Send emergency alert button
+        document.getElementById('sendEmergencyAlertBtn').addEventListener('click', function() {
+            const notifyContacts = document.getElementById('notifyEmergencyContacts').checked;
+            const shareLocation = document.getElementById('shareLocationWithEmergency').checked;
+            
+            alert(`Emergency alert sent${notifyContacts ? ' to all emergency contacts' : ''}${shareLocation ? ' with current location' : ''}`);
+            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('emergencyContactModal'));
+            modal.hide();
+        });
+        
+        // Refresh location button
+        document.getElementById('refreshLocationBtn').addEventListener('click', function() {
+            // Simulate location refresh with loading spinner
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Refreshing...';
+            this.disabled = true;
+            
+            // After some delay, reset button and simulate update
+            setTimeout(() => {
+                this.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Refresh Location';
+                this.disabled = false;
+                
+                // Show success alert
+                alert('Location updated successfully');
+            }, 2000);
+        });
+        
+        // Tracking mode button
+        let trackingEnabled = false;
+        document.getElementById('trackingModeBtn').addEventListener('click', function() {
+            trackingEnabled = !trackingEnabled;
+            
+            if (trackingEnabled) {
+                this.innerHTML = '<i class="fas fa-stop me-1"></i> Stop Tracking';
+                this.classList.remove('btn-outline-danger');
+                this.classList.add('btn-danger');
+                
+                // Simulate movement - in a real app, this would be real-time updates
+                startSimulatedMovement();
+            } else {
+                this.innerHTML = '<i class="fas fa-location-arrow me-1"></i> Live Tracking';
+                this.classList.remove('btn-danger');
+                this.classList.add('btn-outline-danger');
+                
+                // Stop simulated movement
+                stopSimulatedMovement();
+            }
+        });
+        
+        // Directions button
+        document.getElementById('directionsBtn').addEventListener('click', function() {
+            // Get your current location (simulated)
+            const yourLocation = {
+                lat: 40.7200,
+                lng: -74.0200
+            };
+            
+            // Get directions to patient
+            const destination = new google.maps.LatLng(patientLocation.lat, patientLocation.lng);
+            const origin = new google.maps.LatLng(yourLocation.lat, yourLocation.lng);
+            
+            directionsService.route(
+                {
+                    origin: origin,
+                    destination: destination,
+                    travelMode: google.maps.TravelMode.DRIVING
+                },
+                (response, status) => {
+                    if (status === "OK") {
+                        directionsRenderer.setDirections(response);
+                        
+                        // Get route information
+                        const route = response.routes[0];
+                        const leg = route.legs[0];
+                        
+                        // Alert with directions info
+                        alert(`Directions to patient\nDistance: ${leg.distance.text}\nEstimated time: ${leg.duration.text}`);
+                    } else {
+                        alert("Directions request failed due to " + status);
+                    }
+                }
+            );
+        });
+        
+        // Show more nearby button
+        document.getElementById('showMoreNearbyBtn').addEventListener('click', function() {
+            alert('Showing more nearby healthcare facilities is not available in this demo');
+        });
+    });
+    
+    // Simulated movement variables
+    let movementInterval;
+    let movementStep = 0;
+    
+    function startSimulatedMovement() {
+        // Store original location to reset later
+        const originalLocation = {
+            lat: patientLocation.lat,
+            lng: patientLocation.lng
+        };
+        
+        // Define a path for simulation
+        const path = [
+            {lat: patientLocation.lat + 0.001, lng: patientLocation.lng + 0.001},
+            {lat: patientLocation.lat + 0.002, lng: patientLocation.lng + 0.0015},
+            {lat: patientLocation.lat + 0.0025, lng: patientLocation.lng + 0.002},
+            {lat: patientLocation.lat + 0.003, lng: patientLocation.lng + 0.0015},
+            {lat: patientLocation.lat + 0.0035, lng: patientLocation.lng + 0.001},
+            {lat: patientLocation.lat + 0.003, lng: patientLocation.lng},
+            {lat: patientLocation.lat + 0.002, lng: patientLocation.lng - 0.001},
+            {lat: patientLocation.lat + 0.001, lng: patientLocation.lng - 0.0015},
+            {lat: patientLocation.lat, lng: patientLocation.lng - 0.001},
+            {lat: patientLocation.lat - 0.001, lng: patientLocation.lng},
+            {lat: patientLocation.lat - 0.0005, lng: patientLocation.lng + 0.0005},
+            {lat: patientLocation.lat, lng: patientLocation.lng}
+        ];
+        
+        movementInterval = setInterval(() => {
+            // Update marker position
+            const newPos = path[movementStep % path.length];
+            patientMarker.setPosition(newPos);
+            
+            // Pan map to follow
+            map.panTo(newPos);
+            
+            // Update timestamp
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            // Add a breadcrumb marker every few steps
+            if (movementStep % 3 === 0) {
+                new google.maps.Marker({
+                    position: newPos,
+                    map: map,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 3,
+                        fillColor: "#dc3545",
+                        fillOpacity: 0.7,
+                        strokeColor: "#FFFFFF",
+                        strokeWeight: 1
+                    }
+                });
+            }
+            
+            movementStep++;
+            
+            // After going through the path once, stop
+            if (movementStep >= path.length) {
+                stopSimulatedMovement();
+                document.getElementById('trackingModeBtn').innerHTML = '<i class="fas fa-location-arrow me-1"></i> Live Tracking';
+                document.getElementById('trackingModeBtn').classList.remove('btn-danger');
+                document.getElementById('trackingModeBtn').classList.add('btn-outline-danger');
+            }
+        }, 2000);
+    }
+    
+    function stopSimulatedMovement() {
+        clearInterval(movementInterval);
+    }
+</script>
+{% endblock %}

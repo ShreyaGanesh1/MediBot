@@ -1,0 +1,375 @@
+/**
+ * HealthcareApp - Custom CSS
+ * Contains custom styles that extend the Bootstrap theme
+ */
+
+/* General Styling Overrides */
+body {
+    overflow-x: hidden;
+}
+
+/* Enhanced Card Hover Effects */
+.card.hover-effect {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card.hover-effect:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Emergency Button Styling */
+.emergency-btn {
+    height: 150px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 75px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.5);
+    transition: all 0.3s ease;
+}
+
+.emergency-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(220, 53, 69, 0.6);
+}
+
+.emergency-btn:active {
+    transform: scale(0.98);
+}
+
+.pulse {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 15px rgba(220, 53, 69, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+    }
+}
+
+/* Chat Styling */
+.chat-container {
+    height: 70vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-header {
+    padding: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+}
+
+.chat-input {
+    padding: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.message {
+    margin-bottom: 15px;
+    max-width: 75%;
+}
+
+.message-sent {
+    align-self: flex-end;
+    background-color: #0d6efd;
+    color: white;
+    border-radius: 15px 0 15px 15px;
+    margin-left: auto;
+}
+
+.message-received {
+    align-self: flex-start;
+    background-color: #343a40;
+    border-radius: 0 15px 15px 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.message-content {
+    padding: 10px 15px;
+    word-break: break-word;
+}
+
+.message-time {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    margin-top: 5px;
+    text-align: right;
+}
+
+/* Mental Health Chat Styling */
+.mental-health-container {
+    height: 75vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.mental-health-chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+}
+
+.mental-health-message {
+    margin-bottom: 15px;
+    max-width: 80%;
+    padding: 12px 15px;
+    border-radius: 10px;
+    position: relative;
+}
+
+.user-message {
+    align-self: flex-end;
+    background-color: #0d6efd;
+    color: white;
+    border-radius: 15px 5px 15px 15px;
+    margin-left: auto;
+}
+
+.ai-message {
+    align-self: flex-start;
+    background-color: #343a40;
+    border-radius: 5px 15px 15px 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.message-timestamp {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    display: block;
+    text-align: right;
+    margin-top: 5px;
+}
+
+.suggested-messages {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.suggested-message {
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+/* Meditation Section Styling */
+.meditation-card {
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+}
+
+.meditation-card.active-meditation {
+    border-left: 3px solid var(--bs-success);
+    background-color: rgba(25, 135, 84, 0.1);
+}
+
+.meditation-timer {
+    font-family: monospace;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.meditation-controls {
+    display: flex;
+    gap: 10px;
+}
+
+/* Video Call Styling */
+.video-container {
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+    background-color: #000;
+}
+
+.video-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    z-index: 10;
+}
+
+.control-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Doctor & Hospital Cards */
+.doctor-card, .hospital-card {
+    transition: transform 0.3s ease;
+}
+
+.doctor-card:hover, .hospital-card:hover {
+    transform: translateY(-5px);
+}
+
+.rating-stars {
+    color: #ffc107;
+}
+
+/* Map Styling */
+#map {
+    height: 400px;
+    width: 100%;
+    border-radius: 0.25rem;
+}
+
+/* Medical Record Cards */
+.record-type-badge {
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Insurance Calculator Styling */
+.insurance-result-card {
+    border-left: 5px solid var(--bs-success);
+}
+
+.insurance-premium {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--bs-success);
+}
+
+/* Risk Assessment Visualization */
+.risk-indicator {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    font-size: 1.5rem;
+    font-weight: bold;
+    border-width: 10px;
+    border-style: solid;
+}
+
+.risk-low {
+    border-color: #28a745;
+    color: #28a745;
+}
+
+.risk-medium {
+    border-color: #ffc107;
+    color: #ffc107;
+}
+
+.risk-high {
+    border-color: #dc3545;
+    color: #dc3545;
+}
+
+/* Session History Styling */
+.session-item {
+    transition: background-color 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.session-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.session-item.active {
+    border-left: 3px solid var(--bs-primary);
+    background-color: rgba(13, 110, 253, 0.1);
+}
+
+/* Custom Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+/* Typing Indicator for Chat */
+.typing-indicator {
+    display: flex;
+    align-items: center;
+}
+
+.typing-indicator .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.7);
+    margin-right: 5px;
+    animation: typingAnimation 1.5s infinite ease-in-out;
+}
+
+.typing-indicator .dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-indicator .dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typingAnimation {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+    100% { transform: translateY(0); }
+}
+
+/* Toast Notifications */
+.toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+}
+
+.toast {
+    min-width: 250px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .message {
+        max-width: 85%;
+    }
+    
+    .emergency-btn {
+        height: 120px;
+        font-size: 1.2rem;
+    }
+    
+    .risk-indicator {
+        width: 100px;
+        height: 100px;
+        font-size: 1.2rem;
+        border-width: 8px;
+    }
+}

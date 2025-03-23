@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+
+{% block title %}Chat with Dr. {{ doctor.name }} - HealthcareApp{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        height: 70vh;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .chat-header {
+        padding: 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 15px;
+    }
+    
+    .chat-input {
+        padding: 15px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .message {
+        margin-bottom: 15px;
+        max-width: 75%;
+    }
+    
+    .message-sent {
+        align-self: flex-end;
+        background-color: #0d6efd;
+        color: white;
+        border-radius: 15px 0 15px 15px;
+        margin-left: auto;
+    }
+    
+    .message-received {
+        align-self: flex-start;
+        background-color: #343a40;
+        border-radius: 0 15px 15px 15px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .message-content {
+        padding: 10px 15px;
+        word-break: break-word;
+    }
+    
+    .message-time {
+        font-size: 0.75rem;
+        opacity: 0.7;
+        margin-top: 5px;
+        text-align: right;
+    }
+    
+    .video-container {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        background-color: #000;
+    }
+    
+    .video-controls {
+        position: absolute;
+        bottom: 20px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        z-index: 10;
+    }
+    
+    .control-btn {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <a href="{{ url_for('patient.doctors') }}" class="btn btn-outline-secondary mb-3">
+                <i class="fas fa-arrow-left me-2"></i>Back to Doctors
+            </a>
+            <h1><i class="fas fa-comment-medical me-2 text-success"></i>Medical Consultation</h1>
+            <p class="lead">Secure chat session with your healthcare provider.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Doctor Info Sidebar -->
+        <div class="col-md-3 mb-4">
+            <div class="card border-0 bg-dark shadow h-100">
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <div class="rounded-circle bg-success bg-opacity-10 mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            <i class="fas fa-user-md text-success fa-3x"></i>
+                        </div>
+                        <h5 class="card-title">Dr. {{ doctor.name }}</h5>
+                        <p class="text-primary mb-1">{{ doctor.specialization }}</p>
+                        <div class="mb-3">
+                            <span style="color: #ffc107;">
+                                {% for i in range(5) %}
+                                    {% if i < doctor.rating|int %}
+                                        <i class="fas fa-star"></i>
+                                    {% elif i < doctor.rating %}
+                                        <i class="fas fa-star-half-alt"></i>
+                                    {% else %}
+                                        <i class="far fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mb-3">
+                        <button class="btn btn-success" id="startVideoBtn">
+                            <i class="fas fa-video me-2"></i>Start Video Call
+                        </button>
+                    </div>
+
+                    <p class="text-muted small mb-2">Doctor's Information:</p>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-hospital text-info me-2"></i>{{ doctor.hospital.name }}</li>
+                        <li><i class="fas fa-user-clock text-warning me-2"></i>{{ doctor.experience_years }} years experience</li>
+                    </ul>
+
+                    <div class="alert alert-info mt-3 small">
+                        <p class="mb-0"><i class="fas fa-shield-alt me-2"></i>Your conversation is private and encrypted.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chat Area -->
+        <div class="col-md-9">
+            <div class="card border-0 bg-dark shadow">
+                <div class="card-body p-0">
+                    <!-- Video call area (hidden by default) -->
+                    <div id="videoCallArea" class="video-container" style="display: none; height: 480px;">
+                        <video id="remoteVideo" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+                        <video id="localVideo" autoplay muted playsinline style="position: absolute; width: 150px; height: 150px; right: 20px; top: 20px; object-fit: cover; border-radius: 10px; border: 2px solid white;"></video>
+                        
+                        <div class="video-controls">
+                            <button class="btn btn-light control-btn" id="toggleMicBtn">
+                                <i class="fas fa-microphone"></i>
+                            </button>
+                            <button class="btn btn-light control-btn" id="toggleVideoBtn">
+                                <i class="fas fa-video"></i>
+                            </button>
+                            <button class="btn btn-danger control-btn" id="endCallBtn">
+                                <i class="fas fa-phone-slash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Chat interface -->
+                    <div class="chat-container">
+                        <div class="chat-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-0">Chat with Dr. {{ doctor.name }}</h5>
+                                <small class="text-muted">Session ID: {{ chat_session.id }}</small>
+                            </div>
+                            <div>
+                                <span class="badge bg-success" id="statusIndicator">Active</span>
+                            </div>
+                        </div>
+                        
+                        <div class="chat-messages d-flex flex-column" id="chatMessages">
+                            <!-- System message -->
+                            <div class="message text-center w-100 my-3">
+                                <div class="text-muted small">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Your chat session with Dr. {{ doctor.name }} has started
+                                </div>
+                            </div>
+                            
+                            {% for message in messages %}
+                                <div class="message {{ 'message-sent' if message.sender_type == 'patient' else 'message-received' }}">
+                                    <div class="message-content">
+                                        {{ message.message }}
+                                    </div>
+                                    <div class="message-time">
+                                        {{ message.timestamp.strftime('%I:%M %p') }}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="chat-input">
+                            <form method="POST" action="{{ url_for('patient.chat', doctor_id=doctor.id) }}" id="messageForm">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" placeholder="Type your message..." name="message" id="messageInput" required>
+                                    <button class="btn btn-primary" type="submit">
+                                        <i class="fas fa-paper-plane me-1"></i>Send
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Scroll to bottom of chat messages
+        const chatMessages = document.getElementById('chatMessages');
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Message form submission
+        const messageForm = document.getElementById('messageForm');
+        const messageInput = document.getElementById('messageInput');
+        
+        messageForm.addEventListener('submit', function(e) {
+            if (!messageInput.value.trim()) {
+                e.preventDefault();
+            }
+        });
+        
+        // Video call functionality
+        const startVideoBtn = document.getElementById('startVideoBtn');
+        const videoCallArea = document.getElementById('videoCallArea');
+        const endCallBtn = document.getElementById('endCallBtn');
+        
+        startVideoBtn.addEventListener('click', function() {
+            videoCallArea.style.display = 'block';
+            startVideoBtn.disabled = true;
+            startVideoBtn.innerHTML = '<i class="fas fa-video me-2"></i>Video Call Active';
+            
+            // In a real app, this would initiate WebRTC connection
+            initVideoCall();
+        });
+        
+        endCallBtn.addEventListener('click', function() {
+            videoCallArea.style.display = 'none';
+            startVideoBtn.disabled = false;
+            startVideoBtn.innerHTML = '<i class="fas fa-video me-2"></i>Start Video Call';
+            
+            // In a real app, this would end WebRTC connection
+            endVideoCall();
+        });
+        
+        // Toggle mute/unmute
+        const toggleMicBtn = document.getElementById('toggleMicBtn');
+        let isMuted = false;
+        
+        toggleMicBtn.addEventListener('click', function() {
+            isMuted = !isMuted;
+            toggleMicBtn.innerHTML = isMuted ? '<i class="fas fa-microphone-slash"></i>' : '<i class="fas fa-microphone"></i>';
+            
+            // In a real app, this would toggle the audio track
+        });
+        
+        // Toggle video on/off
+        const toggleVideoBtn = document.getElementById('toggleVideoBtn');
+        let isVideoOff = false;
+        
+        toggleVideoBtn.addEventListener('click', function() {
+            isVideoOff = !isVideoOff;
+            toggleVideoBtn.innerHTML = isVideoOff ? '<i class="fas fa-video-slash"></i>' : '<i class="fas fa-video"></i>';
+            
+            // In a real app, this would toggle the video track
+            document.getElementById('localVideo').style.display = isVideoOff ? 'none' : 'block';
+        });
+    });
+    
+    // Video call simulation (in a real app, this would use WebRTC)
+    function initVideoCall() {
+        // Simulate getting user media
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+            .then(stream => {
+                document.getElementById('localVideo').srcObject = stream;
+                
+                // Simulate remote video (in a real app this would come from WebRTC)
+                setTimeout(() => {
+                    // Just showing the same stream for demo purposes
+                    document.getElementById('remoteVideo').srcObject = stream;
+                    
+                    // Show a simulated "connected" message
+                    const chatMessages = document.getElementById('chatMessages');
+                    const systemMessage = document.createElement('div');
+                    systemMessage.className = 'message text-center w-100 my-3';
+                    systemMessage.innerHTML = `
+                        <div class="text-muted small">
+                            <i class="fas fa-video me-1"></i>
+                            Video call connected
+                        </div>
+                    `;
+                    chatMessages.appendChild(systemMessage);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }, 2000);
+            })
+            .catch(err => {
+                console.error('Error accessing media devices.', err);
+                alert('Could not access camera and microphone. Please check permissions.');
+                
+                // Reset UI
+                document.getElementById('videoCallArea').style.display = 'none';
+                document.getElementById('startVideoBtn').disabled = false;
+                document.getElementById('startVideoBtn').innerHTML = '<i class="fas fa-video me-2"></i>Start Video Call';
+            });
+    }
+    
+    function endVideoCall() {
+        // Stop all video/audio tracks
+        const localVideo = document.getElementById('localVideo');
+        const remoteVideo = document.getElementById('remoteVideo');
+        
+        if (localVideo.srcObject) {
+            localVideo.srcObject.getTracks().forEach(track => track.stop());
+            localVideo.srcObject = null;
+        }
+        
+        if (remoteVideo.srcObject) {
+            remoteVideo.srcObject = null;
+        }
+        
+        // Show call ended message
+        const chatMessages = document.getElementById('chatMessages');
+        const systemMessage = document.createElement('div');
+        systemMessage.className = 'message text-center w-100 my-3';
+        systemMessage.innerHTML = `
+            <div class="text-muted small">
+                <i class="fas fa-video-slash me-1"></i>
+                Video call ended
+            </div>
+        `;
+        chatMessages.appendChild(systemMessage);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+</script>
+{% endblock %}

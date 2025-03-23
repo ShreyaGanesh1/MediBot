@@ -1,0 +1,432 @@
+{% extends "base.html" %}
+
+{% block title %}Attender Dashboard - HealthcareApp{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="mb-3">Welcome, {{ user.full_name }}</h1>
+            <p class="lead">Manage and monitor your patients' health information and care from your dashboard.</p>
+        </div>
+    </div>
+
+    <!-- Patient List Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 bg-dark shadow">
+                <div class="card-header bg-primary bg-opacity-10">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 text-primary"><i class="fas fa-users me-2"></i>Patients Under Your Care</h5>
+                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addPatientModal">
+                            <i class="fas fa-user-plus me-1"></i> Add Patient
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if patients %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Age</th>
+                                        <th>Blood Group</th>
+                                        <th>Health Condition</th>
+                                        <th>Access Level</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for patient in patients %}
+                                        <tr>
+                                            <td>{{ patient.user.full_name }}</td>
+                                            <td>{{ patient.user.age }}</td>
+                                            <td>{{ patient.info.blood_group or 'Not specified' }}</td>
+                                            <td>
+                                                <span class="badge {% if patient.info and patient.info.chronic_diseases %}bg-warning{% else %}bg-success{% endif %}">
+                                                    {% if patient.info and patient.info.chronic_diseases %}
+                                                        Has conditions
+                                                    {% else %}
+                                                        Healthy
+                                                    {% endif %}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {% if patient.association.can_access_location and patient.association.can_access_medical_records %}
+                                                    <span class="badge bg-success">Full Access</span>
+                                                {% elif patient.association.can_access_location or patient.association.can_access_medical_records %}
+                                                    <span class="badge bg-info">Partial Access</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Limited Access</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        Actions
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end">
+                                                        {% if patient.association.can_access_location %}
+                                                            <li><a class="dropdown-item" href="{{ url_for('attender.location', patient_id=patient.user.id) }}">
+                                                                <i class="fas fa-map-marker-alt me-2 text-danger"></i>Track Location
+                                                            </a></li>
+                                                        {% endif %}
+                                                        {% if patient.association.can_access_medical_records %}
+                                                            <li><a class="dropdown-item" href="{{ url_for('attender.medical_records', patient_id=patient.user.id) }}">
+                                                                <i class="fas fa-file-medical me-2 text-info"></i>Medical Records
+                                                            </a></li>
+                                                        {% endif %}
+                                                        <li><a class="dropdown-item" href="{{ url_for('attender.insurance', patient_id=patient.user.id) }}">
+                                                            <i class="fas fa-shield-alt me-2 text-success"></i>Insurance
+                                                        </a></li>
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#manageAccessModal" data-patient-id="{{ patient.user.id }}" data-patient-name="{{ patient.user.full_name }}">
+                                                            <i class="fas fa-key me-2 text-warning"></i>Manage Access
+                                                        </a></li>
+                                                    </ul>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-user-slash fa-4x text-muted mb-3"></i>
+                            <h4>No Patients Found</h4>
+                            <p>You currently have no patients under your care.</p>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPatientModal">
+                                <i class="fas fa-user-plus me-2"></i>Add Your First Patient
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats Cards -->
+    <div class="row mb-4 g-4">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 bg-dark shadow">
+                <div class="card-body text-center">
+                    <div class="rounded-circle bg-primary bg-opacity-10 mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <i class="fas fa-calendar-check text-primary fa-3x"></i>
+                    </div>
+                    <h5 class="card-title">Upcoming Check-ups</h5>
+                    <h2 class="display-4 fw-bold mb-3">{{ patients|length }}</h2>
+                    <p class="text-muted mb-0">Patients with scheduled check-ups this month</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 border-0 bg-dark shadow">
+                <div class="card-body text-center">
+                    <div class="rounded-circle bg-danger bg-opacity-10 mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <i class="fas fa-heartbeat text-danger fa-3x"></i>
+                    </div>
+                    <h5 class="card-title">Health Alerts</h5>
+                    <h2 class="display-4 fw-bold mb-3">{{ patients|selectattr('info.chronic_diseases')|list|length }}</h2>
+                    <p class="text-muted mb-0">Patients requiring special attention</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 border-0 bg-dark shadow">
+                <div class="card-body text-center">
+                    <div class="rounded-circle bg-success bg-opacity-10 mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <i class="fas fa-pills text-success fa-3x"></i>
+                    </div>
+                    <h5 class="card-title">Medication Reminders</h5>
+                    <h2 class="display-4 fw-bold mb-3">{{ patients|length * 2 }}</h2>
+                    <p class="text-muted mb-0">Pending medication reminders</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity and Reminders -->
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card border-0 bg-dark shadow h-100">
+                <div class="card-header bg-info bg-opacity-10">
+                    <h5 class="mb-0 text-info"><i class="fas fa-history me-2"></i>Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% if patients %}
+                            <div class="list-group-item bg-transparent d-flex align-items-center">
+                                <div class="me-3">
+                                    <div class="rounded-circle bg-success p-2">
+                                        <i class="fas fa-check text-white"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p class="mb-1">You checked {{ patients[0].user.full_name }}'s location</p>
+                                    <small class="text-muted">Today, 10:23 AM</small>
+                                </div>
+                            </div>
+                            <div class="list-group-item bg-transparent d-flex align-items-center">
+                                <div class="me-3">
+                                    <div class="rounded-circle bg-info p-2">
+                                        <i class="fas fa-file-medical text-white"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p class="mb-1">You updated {{ patients[0].user.full_name }}'s medical records</p>
+                                    <small class="text-muted">Yesterday, 3:45 PM</small>
+                                </div>
+                            </div>
+                            <div class="list-group-item bg-transparent d-flex align-items-center">
+                                <div class="me-3">
+                                    <div class="rounded-circle bg-warning p-2">
+                                        <i class="fas fa-bell text-white"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p class="mb-1">Medication reminder sent to {{ patients[0].user.full_name }}</p>
+                                    <small class="text-muted">Yesterday, 9:00 AM</small>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <p class="text-muted mb-0">No recent activity to display</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-0 bg-dark shadow h-100">
+                <div class="card-header bg-warning bg-opacity-10">
+                    <h5 class="mb-0 text-warning"><i class="fas fa-bell me-2"></i>Upcoming Reminders</h5>
+                </div>
+                <div class="card-body">
+                    {% if patients %}
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ patients[0].user.full_name }}'s Doctor Appointment</h6>
+                                    <small class="text-muted">Tomorrow, 10:00 AM</small>
+                                </div>
+                                <button class="btn btn-sm btn-outline-warning">Remind</button>
+                            </div>
+                            <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ patients[0].user.full_name }}'s Medication Refill</h6>
+                                    <small class="text-muted">In 3 days</small>
+                                </div>
+                                <button class="btn btn-sm btn-outline-warning">Remind</button>
+                            </div>
+                            <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">Blood Test Results</h6>
+                                    <small class="text-muted">Expected in 5 days</small>
+                                </div>
+                                <span class="badge bg-info">Pending</span>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p class="text-muted mb-0">No upcoming reminders</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <button class="btn btn-sm btn-outline-warning">
+                        <i class="fas fa-plus me-1"></i> Add Reminder
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Patient Modal -->
+<div class="modal fade" id="addPatientModal" tabindex="-1" aria-labelledby="addPatientModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addPatientModalLabel">Add Patient</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addPatientForm">
+                    <div class="mb-3">
+                        <label for="patientUsername" class="form-label">Patient's Username</label>
+                        <input type="text" class="form-control" id="patientUsername" required>
+                        <div class="form-text">Enter the patient's registered username in the system.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="relationship" class="form-label">Your Relationship to Patient</label>
+                        <select class="form-select" id="relationship" required>
+                            <option value="">Select Relationship</option>
+                            <option value="Family Member">Family Member</option>
+                            <option value="Spouse">Spouse</option>
+                            <option value="Parent">Parent</option>
+                            <option value="Child">Child</option>
+                            <option value="Caregiver">Caregiver</option>
+                            <option value="Guardian">Guardian</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Access Permissions</label>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="canAccessLocation">
+                            <label class="form-check-label" for="canAccessLocation">
+                                Can access patient's location
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="canAccessMedicalRecords">
+                            <label class="form-check-label" for="canAccessMedicalRecords">
+                                Can access medical records
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>The patient will need to approve your request before you can access their information.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="sendRequestBtn">Send Request</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Manage Access Modal -->
+<div class="modal fade" id="manageAccessModal" tabindex="-1" aria-labelledby="manageAccessModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="manageAccessModalLabel">Manage Access</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="manageAccessForm">
+                    <input type="hidden" id="patientId">
+                    
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-info-circle me-2"></i>Managing access permissions for <strong id="patientNameDisplay"></strong>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Access Permissions</label>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="editCanAccessLocation">
+                            <label class="form-check-label" for="editCanAccessLocation">
+                                Can access patient's location
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="editCanAccessMedicalRecords">
+                            <label class="form-check-label" for="editCanAccessMedicalRecords">
+                                Can access medical records
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notificationType" class="form-label">Notification Preferences</label>
+                        <select class="form-select" id="notificationType">
+                            <option value="all">All notifications</option>
+                            <option value="emergency">Emergency notifications only</option>
+                            <option value="summary">Daily summary</option>
+                            <option value="none">No notifications</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger me-auto" id="removePatientBtn">Remove Patient</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="updateAccessBtn">Update Access</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Manage Access Modal
+        const manageAccessModal = document.getElementById('manageAccessModal');
+        manageAccessModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const patientId = button.getAttribute('data-patient-id');
+            const patientName = button.getAttribute('data-patient-name');
+            
+            document.getElementById('patientId').value = patientId;
+            document.getElementById('patientNameDisplay').textContent = patientName;
+            
+            // In a real application, you would fetch the current permissions
+            // For now, we'll use random values for demonstration
+            document.getElementById('editCanAccessLocation').checked = Math.random() > 0.5;
+            document.getElementById('editCanAccessMedicalRecords').checked = Math.random() > 0.5;
+        });
+        
+        // Send Request Button Click
+        document.getElementById('sendRequestBtn').addEventListener('click', function() {
+            const patientUsername = document.getElementById('patientUsername').value;
+            const relationship = document.getElementById('relationship').value;
+            const canAccessLocation = document.getElementById('canAccessLocation').checked;
+            const canAccessMedicalRecords = document.getElementById('canAccessMedicalRecords').checked;
+            
+            if (!patientUsername || !relationship) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            // In a real application, this would send an API request
+            alert(`Request sent to ${patientUsername}. You will be notified when they approve your request.`);
+            
+            // Close the modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addPatientModal'));
+            modal.hide();
+        });
+        
+        // Update Access Button Click
+        document.getElementById('updateAccessBtn').addEventListener('click', function() {
+            const patientId = document.getElementById('patientId').value;
+            const canAccessLocation = document.getElementById('editCanAccessLocation').checked;
+            const canAccessMedicalRecords = document.getElementById('editCanAccessMedicalRecords').checked;
+            const notificationType = document.getElementById('notificationType').value;
+            
+            // In a real application, this would send an API request
+            alert('Access permissions updated successfully');
+            
+            // Close the modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('manageAccessModal'));
+            modal.hide();
+        });
+        
+        // Remove Patient Button Click
+        document.getElementById('removePatientBtn').addEventListener('click', function() {
+            if (confirm('Are you sure you want to remove this patient? This action cannot be undone.')) {
+                const patientId = document.getElementById('patientId').value;
+                
+                // In a real application, this would send an API request
+                alert('Patient removed successfully');
+                
+                // Close the modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('manageAccessModal'));
+                modal.hide();
+            }
+        });
+    });
+</script>
+{% endblock %}

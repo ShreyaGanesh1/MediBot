@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block title %}Register - MediBot{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 bg-dark shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0 text-center">Create Your Account</h2>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <ul class="nav nav-pills nav-fill" id="roleTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="patient-tab" data-bs-toggle="pill" data-bs-target="#patient" type="button" role="tab" aria-controls="patient" aria-selected="true">
+                                    <i class="fas fa-user-injured me-2"></i>Register as Patient
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="attender-tab" data-bs-toggle="pill" data-bs-target="#attender" type="button" role="tab" aria-controls="attender" aria-selected="false">
+                                    <i class="fas fa-user-shield me-2"></i>Register as Attender
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="tab-content" id="roleTabContent">
+                        <!-- Patient Registration Form -->
+                        <div class="tab-pane fade show active" id="patient" role="tabpanel" aria-labelledby="patient-tab">
+                            <form method="POST" action="{{ url_for('auth.register') }}">
+                                <input type="hidden" name="role" value="patient">
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="username" class="form-label">Username</label>
+                                        <input type="text" class="form-control" id="username" name="username" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="email" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="email" name="email" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="password" class="form-label">Password</label>
+                                        <input type="password" class="form-control" id="password" name="password" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="confirm_password" class="form-label">Confirm Password</label>
+                                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="full_name" class="form-label">Full Name</label>
+                                        <input type="text" class="form-control" id="full_name" name="full_name" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="age" class="form-label">Age</label>
+                                        <input type="number" class="form-control" id="age" name="age" min="1" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="address" class="form-label">Address</label>
+                                    <textarea class="form-control" id="address" name="address" rows="2" required></textarea>
+                                </div>
+
+                                <hr class="my-4">
+                                <h5 class="mb-3">Medical Information</h5>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="blood_group" class="form-label">Blood Group</label>
+                                        <select class="form-select" id="blood_group" name="blood_group">
+                                            <option value="">Select Blood Group</option>
+                                            <option value="A+">A+</option>
+                                            <option value="A-">A-</option>
+                                            <option value="B+">B+</option>
+                                            <option value="B-">B-</option>
+                                            <option value="AB+">AB+</option>
+                                            <option value="AB-">AB-</option>
+                                            <option value="O+">O+</option>
+                                            <option value="O-">O-</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="known_allergies" class="form-label">Known Allergies</label>
+                                    <textarea class="form-control" id="known_allergies" name="known_allergies" rows="2"></textarea>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="chronic_diseases" class="form-label">Chronic Diseases</label>
+                                    <textarea class="form-control" id="chronic_diseases" name="chronic_diseases" rows="2"></textarea>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="current_medications" class="form-label">Current Medications</label>
+                                    <textarea class="form-control" id="current_medications" name="current_medications" rows="2"></textarea>
+                                </div>
+
+                                <hr class="my-4">
+                                <h5 class="mb-3">Emergency Contacts (Minimum 4)</h5>
+                                
+                                <!-- Emergency Contact 1 -->
+                                <div class="card mb-3 bg-dark border">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Primary Emergency Contact</h6>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="emergency_name_1" class="form-label">Name</label>
+                                                <input type="text" class="form-control" id="emergency_name_1" name="emergency_name_1" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="emergency_relationship_1" class="form-label">Relationship</label>
+                                                <input type="text" class="form-control" id="emergency_relationship_1" name="emergency_relationship_1" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="emergency_phone_1" class="form-label">Phone Number</label>
+                                                <input type="tel" class="form-control" id="emergency_phone_1" name="emergency_phone_1" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="emergency_email_1" class="form-label">Email</label>
+                                                <input type="email" class="form-control" id="emergency_email_1" name="emergency_email_1">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Emergency Contact 2 -->
+                                <div class="card mb-3 bg-dark border">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Emergency Contact 2</h6>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="emergency_name_2" class="form-label">Name</label>
+                                                <input type="text" class="form-control" id="emergency_name_2" name="emergency_name_2" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="emergency_relationship_2" class="form-label">Relationship</label>
+                                                <input type="text" class="form-control" id="emergency_relationship_2" name="emergency_relationship_2" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="emergency_phone_2" class="form-label">Phone Number</label>
+                                                <input type="tel" class="form-control" id="emergency_phone_2" name="emergency_phone_2" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="emergency_email_2" class="form-label">Email</label>
+                                                <input type="email" class="form-control" id="emergency_email_2" name="emergency_email_2">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Emergency Contact 3 -->
+                                <div class="card mb-3 bg-dark border">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Emergency Contact 3</h6>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="emergency_name_3" class="form-label">Name</label>
+                                                <input type="text" class="form-control" id="emergency_name_3" name="emergency_name_3" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="emergency_relationship_3" class="form-label">Relationship</label>
+                                                <input type="text" class="form-control" id="emergency_relationship_3" name="emergency_relationship_3" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="emergency_phone_3" class="form-label">Phone Number</label>
+                                                <input type="tel" class="form-control" id="emergency_phone_3" name="emergency_phone_3" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="emergency_email_3" class="form-label">Email</label>
+                                                <input type="email" class="form-control" id="emergency_email_3" name="emergency_email_3">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Emergency Contact 4 -->
+                                <div class="card mb-3 bg-dark border">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Emergency Contact 4</h6>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="emergency_name_4" class="form-label">Name</label>
+                                                <input type="text" class="form-control" id="emergency_name_4" name="emergency_name_4" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="emergency_relationship_4" class="form-label">Relationship</label>
+                                                <input type="text" class="form-control" id="emergency_relationship_4" name="emergency_relationship_4" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="emergency_phone_4" class="form-label">Phone Number</label>
+                                                <input type="tel" class="form-control" id="emergency_phone_4" name="emergency_phone_4" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="emergency_email_4" class="form-label">Email</label>
+                                                <input type="email" class="form-control" id="emergency_email_4" name="emergency_email_4">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-grid gap-2 mt-4">
+                                    <button type="submit" class="btn btn-primary btn-lg">Register as Patient</button>
+                                </div>
+
+                                <div class="text-center mt-3">
+                                    <p>Already have an account? <a href="{{ url_for('auth.login') }}">Login here</a></p>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Attender Registration Form -->
+                        <div class="tab-pane fade" id="attender" role="tabpanel" aria-labelledby="attender-tab">
+                            <form method="POST" action="{{ url_for('auth.register') }}">
+                                <input type="hidden" name="role" value="attender">
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="att_username" class="form-label">Username</label>
+                                        <input type="text" class="form-control" id="att_username" name="username" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="att_email" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="att_email" name="email" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="att_password" class="form-label">Password</label>
+                                        <input type="password" class="form-control" id="att_password" name="password" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="att_confirm_password" class="form-label">Confirm Password</label>
+                                        <input type="password" class="form-control" id="att_confirm_password" name="confirm_password" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="att_full_name" class="form-label">Full Name</label>
+                                        <input type="text" class="form-control" id="att_full_name" name="full_name" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="att_age" class="form-label">Age</label>
+                                        <input type="number" class="form-control" id="att_age" name="age" min="18" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="att_address" class="form-label">Address</label>
+                                    <textarea class="form-control" id="att_address" name="address" rows="2" required></textarea>
+                                </div>
+
+                                <div class="alert alert-info">
+                                    <p class="mb-0">
+                                        <i class="fas fa-info-circle me-2"></i>After registration, you will be able to link to patient accounts.
+                                    </p>
+                                </div>
+
+                                <div class="d-grid gap-2 mt-4">
+                                    <button type="submit" class="btn btn-primary btn-lg">Register as Attender</button>
+                                </div>
+
+                                <div class="text-center mt-3">
+                                    <p>Already have an account? <a href="{{ url_for('auth.login') }}">Login here</a></p>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Form validation for password matching
+    document.addEventListener('DOMContentLoaded', function() {
+        const validatePassword = function(formId) {
+            const password = document.getElementById(formId);
+            const confirm = document.getElementById(formId === 'password' ? 'confirm_password' : 'att_confirm_password');
+            
+            if (password.value !== confirm.value) {
+                confirm.setCustomValidity("Passwords don't match");
+            } else {
+                confirm.setCustomValidity('');
+            }
+        };
+        
+        document.getElementById('password').addEventListener('change', function() {
+            validatePassword('password');
+        });
+        document.getElementById('confirm_password').addEventListener('change', function() {
+            validatePassword('password');
+        });
+        
+        document.getElementById('att_password').addEventListener('change', function() {
+            validatePassword('att_password');
+        });
+        document.getElementById('att_confirm_password').addEventListener('change', function() {
+            validatePassword('att_password');
+        });
+    });
+</script>
+{% endblock %}

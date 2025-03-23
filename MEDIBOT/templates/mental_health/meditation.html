@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block title %}Meditation & Mindfulness - HealthcareApp{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <a href="{{ url_for('mental_health.chat') }}" class="btn btn-outline-secondary mb-3">
+                <i class="fas fa-arrow-left me-2"></i>Back to Mental Health Chat
+            </a>
+            <h1><i class="fas fa-cloud me-2 text-success"></i>Meditation & Mindfulness</h1>
+            <p class="lead">Guided exercises to help reduce stress and improve mental wellbeing.</p>
+        </div>
+    </div>
+
+    <div class="row mb-5">
+        <div class="col-md-8 offset-md-2">
+            <div class="card border-0 bg-dark shadow">
+                <div class="card-body text-center p-5">
+                    <svg class="mb-4" width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="60" cy="60" r="50" fill="#20c9971a" stroke="#20c997" stroke-width="2"/>
+                        <circle cx="60" cy="60" r="35" fill="#20c9970a" stroke="#20c997" stroke-width="1"/>
+                        <circle cx="60" cy="60" r="20" fill="#20c9970a" stroke="#20c997" stroke-width="1"/>
+                        <path d="M40,60 C40,49.0 80,49.0 80,60 C80,80 40,80 40,60" fill="#20c9971a" stroke="#20c997" stroke-width="1"/>
+                    </svg>
+                    
+                    <h2 class="mb-3">Take a moment to breathe</h2>
+                    <p class="mb-4">Meditation and mindfulness practices can help reduce stress, anxiety, and improve focus. Even a few minutes each day can make a difference to your mental wellbeing.</p>
+                    <div class="alert alert-success">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Tip:</strong> Find a quiet, comfortable place where you won't be disturbed. Start with just 5 minutes if you're new to meditation.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="mb-4"><i class="fas fa-spa me-2 text-success"></i>Guided Meditation Exercises</h3>
+        </div>
+        
+        <!-- Breathing Exercise -->
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 bg-dark shadow h-100 meditation-card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-wind text-info me-2"></i>Deep Breathing</h5>
+                    <p class="card-text">A simple breathing exercise to reduce stress and anxiety. Focus on slow, deep breaths to activate your body's relaxation response.</p>
+                    
+                    <h6 class="mb-2">Steps:</h6>
+                    <ol class="mb-4">
+                        <li>Find a comfortable seated position</li>
+                        <li>Breathe in slowly through your nose for 4 counts</li>
+                        <li>Hold your breath for 2 counts</li>
+                        <li>Exhale slowly through your mouth for 6 counts</li>
+                        <li>Repeat for the duration of the session</li>
+                    </ol>
+                    
+                    <div class="d-flex justify-content-between align-items-center" id="meditationControls">
+                        <div class="meditation-timer">00:00</div>
+                        <div class="meditation-controls">
+                            <button class="btn btn-success meditation-play-btn" data-duration="300">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <button class="btn btn-warning meditation-pause-btn" style="display: none;">
+                                <i class="fas fa-pause"></i>
+                            </button>
+                            <button class="btn btn-danger meditation-stop-btn">
+                                <i class="fas fa-stop"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Body Scan -->
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 bg-dark shadow h-100 meditation-card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-search text-warning me-2"></i>Body Scan</h5>
+                    <p class="card-text">Progressively relax your body by focusing attention on different parts from head to toe, releasing tension as you go.</p>
+                    
+                    <h6 class="mb-2">Steps:</h6>
+                    <ol class="mb-4">
+                        <li>Lie down in a comfortable position</li>
+                        <li>Close your eyes and take a few deep breaths</li>
+                        <li>Focus attention on your feet, noticing any sensations</li>
+                        <li>Slowly move your attention up through each part of your body</li>
+                        <li>Release any tension you discover along the way</li>
+                    </ol>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="meditation-timer">00:00</div>
+                        <div class="meditation-controls">
+                            <button class="btn btn-success meditation-play-btn" data-duration="600">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <button class="btn btn-warning meditation-pause-btn" style="display: none;">
+                                <i class="fas fa-pause"></i>
+                            </button>
+                            <button class="btn btn-danger meditation-stop-btn">
+                                <i class="fas fa-stop"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mindful Observation -->
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 bg-dark shadow h-100 meditation-card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-eye text-primary me-2"></i>Mindful Observation</h5>
+                    <p class="card-text">Develop awareness by focusing completely on observing an object. This helps train your mind to stay present and focused.</p>
+                    
+                    <h6 class="mb-2">Steps:</h6>
+                    <ol class="mb-4">
+                        <li>Choose a natural object within your environment</li>
+                        <li>Focus on watching it for a few minutes</li>
+                        <li>Observe colors, textures, shapes, and patterns</li>
+                        <li>Notice its uniqueness as if seeing it for the first time</li>
+                        <li>When your mind wanders, gently return focus to the object</li>
+                    </ol>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="meditation-timer">00:00</div>
+                        <div class="meditation-controls">
+                            <button class="btn btn-success meditation-play-btn" data-duration="300">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <button class="btn btn-warning meditation-pause-btn" style="display: none;">
+                                <i class="fas fa-pause"></i>
+                            </button>
+                            <button class="btn btn-danger meditation-stop-btn">
+                                <i class="fas fa-stop"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-5">
+        <div class="col-12">
+            <h3 class="mb-4"><i class="fas fa-heart me-2 text-danger"></i>Stress Relief Techniques</h3>
+        </div>
+        
+        <!-- Progressive Muscle Relaxation -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 bg-dark shadow h-100 meditation-card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-dumbbell text-warning me-2"></i>Progressive Muscle Relaxation</h5>
+                    <p class="card-text">Reduce physical tension by systematically tensing and then relaxing different muscle groups throughout the body.</p>
+                    
+                    <h6 class="mb-2">Instructions:</h6>
+                    <ol class="mb-4">
+                        <li>Sit or lie in a comfortable position</li>
+                        <li>Starting with your feet, tense the muscles as tightly as you can</li>
+                        <li>Hold the tension for 5 seconds, noticing how it feels</li>
+                        <li>Suddenly release the tension and notice the feeling of relaxation</li>
+                        <li>Move progressively upward through each muscle group</li>
+                    </ol>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="meditation-timer">00:00</div>
+                        <div class="meditation-controls">
+                            <button class="btn btn-success meditation-play-btn" data-duration="600">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <button class="btn btn-warning meditation-pause-btn" style="display: none;">
+                                <i class="fas fa-pause"></i>
+                            </button>
+                            <button class="btn btn-danger meditation-stop-btn">
+                                <i class="fas fa-stop"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Visualization -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 bg-dark shadow h-100 meditation-card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-mountain text-success me-2"></i>Peaceful Place Visualization</h5>
+                    <p class="card-text">Use your imagination to create a mental sanctuary where you can go anytime you need to relax and de-stress.</p>
+                    
+                    <h6 class="mb-2">Instructions:</h6>
+                    <ol class="mb-4">
+                        <li>Close your eyes and take several deep breaths</li>
+                        <li>Imagine a peaceful place where you feel safe and calm</li>
+                        <li>Notice the details: sights, sounds, smells, textures</li>
+                        <li>Feel the peaceful sensations throughout your body</li>
+                        <li>When ready, slowly return your awareness to the present</li>
+                    </ol>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="meditation-timer">00:00</div>
+                        <div class="meditation-controls">
+                            <button class="btn btn-success meditation-play-btn" data-duration="600">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <button class="btn btn-warning meditation-pause-btn" style="display: none;">
+                                <i class="fas fa-pause"></i>
+                            </button>
+                            <button class="btn btn-danger meditation-stop-btn">
+                                <i class="fas fa-stop"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card border-0 bg-dark shadow">
+                <div class="card-header bg-danger bg-opacity-10">
+                    <h5 class="mb-0 text-danger"><i class="fas fa-phone-alt me-2"></i>Mental Health Support Resources</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Crisis Helplines:</h6>
+                            <ul class="list-group list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>988 Suicide & Crisis Lifeline</strong>
+                                        <p class="mb-0 small text-muted">24/7 support for people in distress</p>
+                                    </div>
+                                    <a href="tel:988" class="btn btn-sm btn-outline-danger">Call</a>
+                                </li>
+                                <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>Crisis Text Line</strong>
+                                        <p class="mb-0 small text-muted">Text HOME to 741741</p>
+                                    </div>
+                                    <a href="sms:741741?body=HOME" class="btn btn-sm btn-outline-danger">Text</a>
+                                </li>
+                                <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>SAMHSA's National Helpline</strong>
+                                        <p class="mb-0 small text-muted">Treatment referral and information</p>
+                                    </div>
+                                    <a href="tel:18006624357" class="btn btn-sm btn-outline-danger">Call</a>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Additional Resources:</h6>
+                            <div class="list-group list-group-flush">
+                                <a href="https://www.nami.org" target="_blank" class="list-group-item list-group-item-action bg-transparent">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">National Alliance on Mental Illness</h6>
+                                        <small><i class="fas fa-external-link-alt"></i></small>
+                                    </div>
+                                    <p class="mb-1 small">Education, support and advocacy for individuals affected by mental illness</p>
+                                </a>
+                                <a href="https://www.nimh.nih.gov" target="_blank" class="list-group-item list-group-item-action bg-transparent">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">National Institute of Mental Health</h6>
+                                        <small><i class="fas fa-external-link-alt"></i></small>
+                                    </div>
+                                    <p class="mb-1 small">The lead federal agency for research on mental disorders</p>
+                                </a>
+                                <a href="{{ url_for('patient.doctors') }}?specialty=Psychiatry" class="list-group-item list-group-item-action bg-transparent">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Find a Mental Health Professional</h6>
+                                        <small><i class="fas fa-user-md"></i></small>
+                                    </div>
+                                    <p class="mb-1 small">Connect with psychiatrists, psychologists, and therapists in your area</p>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/mental_health.js') }}"></script>
+{% endblock %}

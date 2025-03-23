@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to MediBot - Your AI Healthcare Assistant{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Hero Section -->
+    <div class="row align-items-center mb-5">
+        <div class="col-lg-6">
+            <h1 class="display-4 fw-bold mb-3">Your Health, <span class="text-primary">Our Priority</span></h1>
+            <p class="lead mb-4">MediBot combines cutting-edge AI technology with personalized healthcare management to provide comprehensive support for patients and their caretakers.</p>
+            <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg px-4 me-md-2">Get Started</a>
+                <a href="#features" class="btn btn-outline-secondary btn-lg px-4">Learn More</a>
+            </div>
+        </div>
+        <div class="col-lg-6 mt-4 mt-lg-0 text-center">
+            <svg class="img-fluid" width="500" height="400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400">
+                <rect width="100%" height="100%" fill="#f8f9fa10" rx="10" ry="10"/>
+                <path d="M250,100 L350,200 L300,300 L200,300 L150,200 Z" fill="#0d6efd20" stroke="#0d6efd" stroke-width="3"/>
+                <circle cx="250" cy="150" r="50" fill="#dc354580" stroke="#dc3545" stroke-width="3"/>
+                <path d="M150,200 Q250,250 350,200" stroke="#198754" stroke-width="5" fill="none"/>
+                <text x="250" y="350" text-anchor="middle" font-size="24" fill="#f8f9fa">MediBot - AI Healthcare Assistant</text>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <section id="features" class="py-5">
+        <h2 class="text-center mb-5">Key Features</h2>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 border-0 bg-dark">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-ambulance fa-3x text-danger"></i>
+                        </div>
+                        <h3 class="card-title">Emergency Services</h3>
+                        <p class="card-text">Quickly access emergency services with our one-click emergency button, connecting you to the nearest hospitals and alerting your emergency contacts.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 border-0 bg-dark">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-file-medical fa-3x text-primary"></i>
+                        </div>
+                        <h3 class="card-title">Medical Records</h3>
+                        <p class="card-text">Securely store, share, and manage your medical records, including diagnoses, prescriptions, and lab results with end-to-end encryption.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 border-0 bg-dark">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-brain fa-3x text-success"></i>
+                        </div>
+                        <h3 class="card-title">Mental Health Support</h3>
+                        <p class="card-text">Access 24/7 mental health support through our AI-powered chatbot, meditation resources, and connections to professional help.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 border-0 bg-dark">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-user-md fa-3x text-info"></i>
+                        </div>
+                        <h3 class="card-title">Doctor Consultations</h3>
+                        <p class="card-text">Connect with specialists through text and video chat. Schedule appointments or get immediate assistance from available doctors.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 border-0 bg-dark">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-shield-alt fa-3x text-warning"></i>
+                        </div>
+                        <h3 class="card-title">Insurance Management</h3>
+                        <p class="card-text">Calculate insurance costs, manage policies, and receive AI-powered recommendations based on your medical history.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 border-0 bg-dark">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-user-friends fa-3x text-secondary"></i>
+                        </div>
+                        <h3 class="card-title">Attender Access</h3>
+                        <p class="card-text">Family members and caretakers can monitor patient locations, manage medical records, and receive alerts during emergencies.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="py-5">
+        <h2 class="text-center mb-5">How It Works</h2>
+        
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="d-flex flex-column align-items-center">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                <h3 class="mb-0">1</h3>
+                            </div>
+                            <h4 class="text-center">Register an Account</h4>
+                            <p class="text-center">Create an account as a patient or attender with your personal and medical details.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="d-flex flex-column align-items-center">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                <h3 class="mb-0">2</h3>
+                            </div>
+                            <h4 class="text-center">Set Up Your Profile</h4>
+                            <p class="text-center">Add your medical history, emergency contacts, and connect with family members.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="d-flex flex-column align-items-center">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                <h3 class="mb-0">3</h3>
+                            </div>
+                            <h4 class="text-center">Access Services</h4>
+                            <p class="text-center">Utilize emergency services, manage medical records, consult doctors, and more.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-5 text-center">
+        <div class="p-5 rounded-3 bg-dark">
+            <h2 class="display-5 fw-bold mb-3">Ready to take control of your health?</h2>
+            <p class="lead mb-4">Join thousands of users who are managing their healthcare needs with our comprehensive platform.</p>
+            <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg px-4 gap-3">Sign Up Now</a>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light btn-lg px-4">Login</a>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

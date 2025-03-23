@@ -1,0 +1,479 @@
+{% extends "base.html" %}
+
+{% block title %}Hospitals Near You - HealthcareApp{% endblock %}
+
+{% block extra_css %}
+<style>
+    #map {
+        height: 500px;
+        width: 100%;
+        border-radius: 0.25rem;
+    }
+    
+    .hospital-card {
+        transition: transform 0.3s ease;
+    }
+    
+    .hospital-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .rating-stars {
+        color: #ffc107;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1><i class="fas fa-hospital me-2 text-info"></i>Hospitals Near You</h1>
+            <p class="lead">Find hospitals and healthcare facilities in your area.</p>
+        </div>
+    </div>
+
+    <!-- Map and Search Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 bg-dark shadow">
+                <div class="card-header bg-info bg-opacity-10 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-info"><i class="fas fa-map-marked-alt me-2"></i>Hospital Map</h5>
+                    <div class="d-flex">
+                        <div class="input-group me-2" style="max-width: 300px;">
+                            <input type="text" class="form-control" placeholder="Search hospitals..." id="hospitalSearch">
+                            <button class="btn btn-outline-info" type="button" id="searchButton">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <button class="btn btn-outline-info" id="refreshMapBtn">
+                            <i class="fas fa-location-arrow me-1"></i> My Location
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div id="map" class="mb-0"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Options -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 bg-dark shadow">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-2">
+                            <label class="mb-md-0">Filter By:</label>
+                        </div>
+                        <div class="col-md-3 mb-3 mb-md-0">
+                            <select class="form-select" id="specialtyFilter">
+                                <option value="">All Specialties</option>
+                                <option value="general">General Hospital</option>
+                                <option value="cardiology">Cardiology</option>
+                                <option value="orthopedic">Orthopedic</option>
+                                <option value="pediatric">Pediatric</option>
+                                <option value="maternity">Maternity</option>
+                                <option value="cancer">Cancer Treatment</option>
+                                <option value="mental">Mental Health</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3 mb-md-0">
+                            <select class="form-select" id="distanceFilter">
+                                <option value="">Any Distance</option>
+                                <option value="5">Within 5 km</option>
+                                <option value="10">Within 10 km</option>
+                                <option value="25">Within 25 km</option>
+                                <option value="50">Within 50 km</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 mb-3 mb-md-0">
+                            <select class="form-select" id="ratingFilter">
+                                <option value="">Any Rating</option>
+                                <option value="4">4+ Stars</option>
+                                <option value="3">3+ Stars</option>
+                                <option value="2">2+ Stars</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-primary w-100" id="applyFilters">Apply Filters</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hospital Listings -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h3 class="mb-4">Nearby Hospitals</h3>
+        </div>
+        
+        <!-- Hospital Cards -->
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="hospitalsList">
+            {% for hospital in hospitals %}
+                <div class="col">
+                    <div class="card h-100 border-0 bg-dark shadow hospital-card">
+                        <div class="card-body">
+                            <h5 class="card-title mb-1">{{ hospital.name }}</h5>
+                            <div class="mb-2">
+                                <span class="rating-stars">
+                                    {% for i in range(5) %}
+                                        {% if i < hospital.rating|int %}
+                                            <i class="fas fa-star"></i>
+                                        {% elif i < hospital.rating %}
+                                            <i class="fas fa-star-half-alt"></i>
+                                        {% else %}
+                                            <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </span>
+                                <span class="text-muted ms-1">{{ hospital.rating }}</span>
+                            </div>
+                            <p class="card-text">
+                                <i class="fas fa-map-marker-alt text-danger me-2"></i>{{ hospital.address }}
+                            </p>
+                            <p class="card-text">
+                                <i class="fas fa-phone text-success me-2"></i>{{ hospital.phone_number }}
+                            </p>
+                            {% if hospital.emergency_number %}
+                                <p class="card-text">
+                                    <i class="fas fa-ambulance text-danger me-2"></i>{{ hospital.emergency_number }}
+                                </p>
+                            {% endif %}
+                            <div class="d-flex justify-content-between mt-3">
+                                <a href="{{ url_for('hospital.view_hospital', hospital_id=hospital.id) }}" class="btn btn-outline-info">
+                                    <i class="fas fa-info-circle me-1"></i>Details
+                                </a>
+                                <a href="{{ url_for('patient.doctors', hospital_id=hospital.id) }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-user-md me-1"></i>Doctors
+                                </a>
+                                <button class="btn btn-outline-success get-directions" 
+                                        data-lat="{{ hospital.latitude }}" 
+                                        data-lng="{{ hospital.longitude }}"
+                                        data-name="{{ hospital.name }}">
+                                    <i class="fas fa-directions me-1"></i>Directions
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Featured Services -->
+    <div class="row">
+        <div class="col-12">
+            <h3 class="mb-4">Specialized Healthcare Services</h3>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 bg-dark shadow h-100">
+                <div class="card-body text-center p-4">
+                    <div class="rounded-circle bg-danger bg-opacity-10 mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <i class="fas fa-heartbeat text-danger fa-3x"></i>
+                    </div>
+                    <h4>Cardiac Care</h4>
+                    <p>Specialized heart care centers with advanced diagnostic and treatment facilities.</p>
+                    <button class="btn btn-outline-danger mt-2" id="findCardiacCare">Find Nearest Center</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 bg-dark shadow h-100">
+                <div class="card-body text-center p-4">
+                    <div class="rounded-circle bg-info bg-opacity-10 mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <i class="fas fa-baby text-info fa-3x"></i>
+                    </div>
+                    <h4>Maternity Services</h4>
+                    <p>Comprehensive care for expectant mothers and newborns.</p>
+                    <button class="btn btn-outline-info mt-2" id="findMaternity">Find Maternity Hospitals</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 bg-dark shadow h-100">
+                <div class="card-body text-center p-4">
+                    <div class="rounded-circle bg-success bg-opacity-10 mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <i class="fas fa-brain text-success fa-3x"></i>
+                    </div>
+                    <h4>Mental Health</h4>
+                    <p>Specialized facilities for mental health diagnosis, treatment, and counseling.</p>
+                    <button class="btn btn-outline-success mt-2" id="findMentalHealth">Find Mental Health Services</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://maps.googleapis.com/maps/api/js?key={{ config.GOOGLE_MAPS_API_KEY }}&callback=initMap" async defer></script>
+<script>
+    let map;
+    let userMarker;
+    let hospitalMarkers = [];
+    let directionsService;
+    let directionsRenderer;
+    let currentPosition = {
+        lat: {{ current_location.latitude }},
+        lng: {{ current_location.longitude }}
+    };
+
+    function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+            center: currentPosition,
+            zoom: 12,
+            styles: [
+                { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+                { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+                { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+                {
+                    featureType: "administrative.locality",
+                    elementType: "labels.text.fill",
+                    stylers: [{ color: "#d59563" }],
+                },
+                {
+                    featureType: "poi",
+                    elementType: "labels.text.fill",
+                    stylers: [{ color: "#d59563" }],
+                },
+                {
+                    featureType: "poi.park",
+                    elementType: "geometry",
+                    stylers: [{ color: "#263c3f" }],
+                },
+                {
+                    featureType: "poi.park",
+                    elementType: "labels.text.fill",
+                    stylers: [{ color: "#6b9a76" }],
+                },
+                {
+                    featureType: "road",
+                    elementType: "geometry",
+                    stylers: [{ color: "#38414e" }],
+                },
+                {
+                    featureType: "road",
+                    elementType: "geometry.stroke",
+                    stylers: [{ color: "#212a37" }],
+                },
+                {
+                    featureType: "road",
+                    elementType: "labels.text.fill",
+                    stylers: [{ color: "#9ca5b3" }],
+                },
+                {
+                    featureType: "road.highway",
+                    elementType: "geometry",
+                    stylers: [{ color: "#746855" }],
+                },
+                {
+                    featureType: "road.highway",
+                    elementType: "geometry.stroke",
+                    stylers: [{ color: "#1f2835" }],
+                },
+                {
+                    featureType: "road.highway",
+                    elementType: "labels.text.fill",
+                    stylers: [{ color: "#f3d19c" }],
+                },
+                {
+                    featureType: "transit",
+                    elementType: "geometry",
+                    stylers: [{ color: "#2f3948" }],
+                },
+                {
+                    featureType: "transit.station",
+                    elementType: "labels.text.fill",
+                    stylers: [{ color: "#d59563" }],
+                },
+                {
+                    featureType: "water",
+                    elementType: "geometry",
+                    stylers: [{ color: "#17263c" }],
+                },
+                {
+                    featureType: "water",
+                    elementType: "labels.text.fill",
+                    stylers: [{ color: "#515c6d" }],
+                },
+                {
+                    featureType: "water",
+                    elementType: "labels.text.stroke",
+                    stylers: [{ color: "#17263c" }],
+                },
+            ]
+        });
+
+        // Add user marker
+        userMarker = new google.maps.Marker({
+            position: currentPosition,
+            map: map,
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 10,
+                fillColor: "#4285F4",
+                fillOpacity: 1,
+                strokeColor: "#FFFFFF",
+                strokeWeight: 2
+            },
+            title: "Your Location"
+        });
+
+        // Add hospital markers
+        {% for hospital in hospitals %}
+        const hospitalPosition = {
+            lat: {{ hospital.latitude }},
+            lng: {{ hospital.longitude }}
+        };
+
+        const hospitalMarker = new google.maps.Marker({
+            position: hospitalPosition,
+            map: map,
+            icon: {
+                url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png"
+            },
+            title: "{{ hospital.name }}"
+        });
+
+        const infoWindow = new google.maps.InfoWindow({
+            content: `
+                <div style="color: black; max-width: 200px;">
+                    <h5>{{ hospital.name }}</h5>
+                    <p>{{ hospital.address }}</p>
+                    <p>Rating: {{ hospital.rating }} ⭐</p>
+                    <p>Phone: {{ hospital.phone_number }}</p>
+                    <p><a href="{{ url_for('hospital.view_hospital', hospital_id=hospital.id) }}" style="color: blue;">View Details</a></p>
+                </div>
+            `
+        });
+
+        hospitalMarker.addListener('click', () => {
+            infoWindow.open(map, hospitalMarker);
+        });
+
+        hospitalMarkers.push(hospitalMarker);
+        {% endfor %}
+
+        // Initialize directions service and renderer
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer({
+            map: map,
+            polylineOptions: {
+                strokeColor: '#0d6efd',
+                strokeWeight: 5
+            }
+        });
+
+        // Add event listeners to direction buttons
+        document.querySelectorAll('.get-directions').forEach(button => {
+            button.addEventListener('click', function() {
+                const lat = parseFloat(this.getAttribute('data-lat'));
+                const lng = parseFloat(this.getAttribute('data-lng'));
+                const hospitalName = this.getAttribute('data-name');
+                getDirections(lat, lng, hospitalName);
+            });
+        });
+    }
+
+    function getDirections(destLat, destLng, hospitalName) {
+        const destination = new google.maps.LatLng(destLat, destLng);
+        const origin = new google.maps.LatLng(currentPosition.lat, currentPosition.lng);
+
+        directionsService.route(
+            {
+                origin: origin,
+                destination: destination,
+                travelMode: google.maps.TravelMode.DRIVING
+            },
+            (response, status) => {
+                if (status === "OK") {
+                    directionsRenderer.setDirections(response);
+                    
+                    // Display route information
+                    const route = response.routes[0];
+                    const leg = route.legs[0];
+                    
+                    // Scroll to map
+                    document.getElementById('map').scrollIntoView({ behavior: 'smooth' });
+                    
+                    // Alert with directions info
+                    alert(`Directions to ${hospitalName}\nDistance: ${leg.distance.text}\nEstimated time: ${leg.duration.text}`);
+                } else {
+                    alert("Directions request failed due to " + status);
+                }
+            }
+        );
+    }
+
+    // Refresh map
+    document.getElementById('refreshMapBtn').addEventListener('click', function() {
+        // In a real app, this would update the user's current location
+        // For demo purposes, we'll just recenter the map
+        map.setCenter(currentPosition);
+        map.setZoom(12);
+        
+        // Clear any directions
+        directionsRenderer.setDirections({routes: []});
+    });
+
+    // Hospital search functionality
+    document.getElementById('searchButton').addEventListener('click', function() {
+        const searchText = document.getElementById('hospitalSearch').value.toLowerCase();
+        if (!searchText) return;
+        
+        // Find matching hospital in our list
+        {% for hospital in hospitals %}
+        if ("{{ hospital.name }}".toLowerCase().includes(searchText)) {
+            const position = {
+                lat: {{ hospital.latitude }},
+                lng: {{ hospital.longitude }}
+            };
+            map.setCenter(position);
+            map.setZoom(15);
+            
+            // Find and click the marker to open info window
+            hospitalMarkers.forEach(marker => {
+                if (marker.getTitle().toLowerCase() === "{{ hospital.name }}".toLowerCase()) {
+                    google.maps.event.trigger(marker, 'click');
+                }
+            });
+            
+            break;
+        }
+        {% endfor %}
+    });
+
+    // Filter buttons (simulated - would be implemented with actual data in a real app)
+    document.getElementById('findCardiacCare').addEventListener('click', function() {
+        alert('Searching for cardiac care centers near you...');
+        // This would filter the hospitals list in a real app
+    });
+
+    document.getElementById('findMaternity').addEventListener('click', function() {
+        alert('Searching for maternity hospitals near you...');
+        // This would filter the hospitals list in a real app
+    });
+
+    document.getElementById('findMentalHealth').addEventListener('click', function() {
+        alert('Searching for mental health services near you...');
+        // This would filter the hospitals list in a real app
+    });
+
+    // Apply filters button
+    document.getElementById('applyFilters').addEventListener('click', function() {
+        const specialty = document.getElementById('specialtyFilter').value;
+        const distance = document.getElementById('distanceFilter').value;
+        const rating = document.getElementById('ratingFilter').value;
+        
+        alert(`Applying filters: Specialty: ${specialty || 'Any'}, Distance: ${distance || 'Any'} km, Rating: ${rating || 'Any'}+ stars`);
+        // This would filter the hospitals list in a real app
+    });
+</script>
+{% endblock %}

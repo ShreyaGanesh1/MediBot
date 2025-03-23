@@ -1,0 +1,614 @@
+{% extends "base.html" %}
+
+{% block title %}Medical Records - {{ patient.full_name }} - HealthcareApp{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-3">
+        <div class="col">
+            <a href="{{ url_for('attender.dashboard') }}" class="btn btn-outline-secondary mb-3">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+            <h1><i class="fas fa-file-medical me-2 text-info"></i>Medical Records</h1>
+            <p class="lead">Manage and monitor {{ patient.full_name }}'s medical records and health information.</p>
+        </div>
+    </div>
+
+    <!-- Patient Information Summary -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 bg-dark shadow">
+                <div class="card-header bg-info bg-opacity-10 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-info"><i class="fas fa-user-md me-2"></i>Patient Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3 mb-md-0">
+                            <div class="text-center">
+                                <div class="rounded-circle bg-info bg-opacity-10 mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
+                                    <i class="fas fa-user text-info fa-3x"></i>
+                                </div>
+                                <h5>{{ patient.full_name }}</h5>
+                                <p class="text-muted">{{ patient.age }} years old</p>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100 border-0 bg-dark">
+                                        <div class="card-body">
+                                            <h6 class="card-title text-info">Blood Group</h6>
+                                            <p class="card-text fs-4">{{ patient_info.blood_group or 'Not specified' }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100 border-0 bg-dark">
+                                        <div class="card-body">
+                                            <h6 class="card-title text-info">Allergies</h6>
+                                            <p class="card-text">{{ patient_info.known_allergies or 'None reported' }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100 border-0 bg-dark">
+                                        <div class="card-body">
+                                            <h6 class="card-title text-info">Chronic Conditions</h6>
+                                            <p class="card-text">{{ patient_info.chronic_diseases or 'None reported' }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card border-0 bg-dark">
+                                <div class="card-body">
+                                    <h6 class="card-title text-info">Current Medications</h6>
+                                    <p class="card-text">{{ patient_info.current_medications or 'No current medications' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Risk Assessment Card -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 bg-dark shadow">
+                <div class="card-header bg-warning bg-opacity-10">
+                    <h5 class="mb-0 text-warning"><i class="fas fa-chart-line me-2"></i>AI Risk Assessment</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-4 mb-md-0">
+                            <h6 class="text-center mb-3">Overall Health Risk</h6>
+                            <div class="d-flex justify-content-center">
+                                <div class="position-relative" style="width: 150px; height: 150px;">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 150px; height: 150px; border: 10px solid 
+                                        {% if risk_prediction.overall_risk == 'Low' %}#28a745{% elif risk_prediction.overall_risk == 'Medium' %}#ffc107{% else %}#dc3545{% endif %};">
+                                        <h2 class="mb-0">{{ risk_prediction.overall_risk }}</h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <div class="card h-100 border-0 bg-dark">
+                                        <div class="card-body text-center">
+                                            <h6>Heart Disease Risk</h6>
+                                            <span class="badge 
+                                                {% if risk_prediction.heart_disease_risk == 'Low' %}bg-success
+                                                {% elif risk_prediction.heart_disease_risk == 'Medium' %}bg-warning
+                                                {% else %}bg-danger{% endif %} px-4 py-2">
+                                                {{ risk_prediction.heart_disease_risk }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card h-100 border-0 bg-dark">
+                                        <div class="card-body text-center">
+                                            <h6>Diabetes Risk</h6>
+                                            <span class="badge 
+                                                {% if risk_prediction.diabetes_risk == 'Low' %}bg-success
+                                                {% elif risk_prediction.diabetes_risk == 'Medium' %}bg-warning
+                                                {% else %}bg-danger{% endif %} px-4 py-2">
+                                                {{ risk_prediction.diabetes_risk }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card h-100 border-0 bg-dark">
+                                        <div class="card-body text-center">
+                                            <h6>Cancer Risk</h6>
+                                            <span class="badge 
+                                                {% if risk_prediction.cancer_risk == 'Low' %}bg-success
+                                                {% elif risk_prediction.cancer_risk == 'Medium' %}bg-warning
+                                                {% else %}bg-danger{% endif %} px-4 py-2">
+                                                {{ risk_prediction.cancer_risk }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <h6 class="mb-3">Recommendations:</h6>
+                            <ul class="list-group list-group-flush">
+                                {% for recommendation in risk_prediction.recommendations %}
+                                    <li class="list-group-item bg-transparent">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        {{ recommendation }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Medical Records Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 bg-dark shadow">
+                <div class="card-header bg-info bg-opacity-10 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-info"><i class="fas fa-file-medical-alt me-2"></i>Medical Records</h5>
+                    <div>
+                        <a href="{{ url_for('attender.add_medical_record', patient_id=patient.id) }}" class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-plus me-1"></i> Add Record
+                        </a>
+                        <div class="dropdown d-inline-block">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle ms-2" type="button" id="recordFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-filter me-1"></i> Filter
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="recordFilterDropdown">
+                                <li><a class="dropdown-item" href="#" data-filter="all">All Records</a></li>
+                                <li><a class="dropdown-item" href="#" data-filter="diagnosis">Diagnoses</a></li>
+                                <li><a class="dropdown-item" href="#" data-filter="lab_result">Lab Results</a></li>
+                                <li><a class="dropdown-item" href="#" data-filter="prescription">Prescriptions</a></li>
+                                <li><a class="dropdown-item" href="#" data-filter="vaccination">Vaccinations</a></li>
+                                <li><a class="dropdown-item" href="#" data-filter="surgery">Surgeries</a></li>
+                                <li><a class="dropdown-item" href="#" data-filter="allergy">Allergies</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if medical_records %}
+                        <div class="table-responsive">
+                            <table class="table" id="medicalRecordsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Title</th>
+                                        <th>Doctor</th>
+                                        <th>Hospital</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for record in medical_records %}
+                                        <tr data-record-type="{{ record.record_type }}">
+                                            <td>{{ record.date.strftime('%b %d, %Y') }}</td>
+                                            <td>
+                                                <span class="badge 
+                                                    {% if record.record_type == 'diagnosis' %}bg-warning
+                                                    {% elif record.record_type == 'lab_result' %}bg-info
+                                                    {% elif record.record_type == 'prescription' %}bg-success
+                                                    {% elif record.record_type == 'vaccination' %}bg-primary
+                                                    {% elif record.record_type == 'surgery' %}bg-danger
+                                                    {% elif record.record_type == 'allergy' %}bg-secondary
+                                                    {% else %}bg-light text-dark{% endif %}">
+                                                    {{ record.record_type.replace('_', ' ').title() }}
+                                                </span>
+                                            </td>
+                                            <td>{{ record.title }}</td>
+                                            <td>{{ record.doctor_name or 'N/A' }}</td>
+                                            <td>{{ record.hospital_name or 'N/A' }}</td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary view-record-btn" data-bs-toggle="modal" data-bs-target="#viewRecordModal" data-record-id="{{ record.id }}">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <a href="{{ url_for('attender.edit_medical_record', patient_id=patient.id, record_id=record.id) }}" class="btn btn-sm btn-outline-secondary">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteRecordModal" data-record-id="{{ record.id }}">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-file-medical fa-4x text-muted mb-3"></i>
+                            <h4>No Medical Records Found</h4>
+                            <p>Start tracking the patient's health by adding medical records.</p>
+                            <a href="{{ url_for('attender.add_medical_record', patient_id=patient.id) }}" class="btn btn-info">
+                                <i class="fas fa-plus me-1"></i> Add First Record
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions Row -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-4 mb-md-0">
+            <div class="card border-0 bg-dark shadow h-100">
+                <div class="card-header bg-primary bg-opacity-10">
+                    <h5 class="mb-0 text-primary"><i class="fas fa-bell me-2"></i>Health Reminders</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">Medication Reminder</h6>
+                                <p class="mb-0 small text-muted">Daily at 8:00 AM and 8:00 PM</p>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary">Edit</button>
+                        </div>
+                        <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">Doctor's Appointment</h6>
+                                <p class="mb-0 small text-muted">Next appointment: Next Monday at 10:00 AM</p>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary">Edit</button>
+                        </div>
+                        <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">Health Checkup</h6>
+                                <p class="mb-0 small text-muted">Quarterly (Next: in 2 months)</p>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary">Edit</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <button class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-plus me-1"></i> Add Reminder
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card border-0 bg-dark shadow h-100">
+                <div class="card-header bg-success bg-opacity-10">
+                    <h5 class="mb-0 text-success"><i class="fas fa-clipboard-list me-2"></i>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <a href="{{ url_for('attender.insurance', patient_id=patient.id) }}" class="btn btn-outline-success w-100 p-3">
+                                <i class="fas fa-shield-alt fa-2x mb-2"></i>
+                                <div>Insurance Management</div>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="{{ url_for('attender.location', patient_id=patient.id) }}" class="btn btn-outline-danger w-100 p-3">
+                                <i class="fas fa-map-marker-alt fa-2x mb-2"></i>
+                                <div>Track Location</div>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-outline-info w-100 p-3" data-bs-toggle="modal" data-bs-target="#shareRecordsModal">
+                                <i class="fas fa-share-alt fa-2x mb-2"></i>
+                                <div>Share Records</div>
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-outline-warning w-100 p-3" data-bs-toggle="modal" data-bs-target="#exportRecordsModal">
+                                <i class="fas fa-file-export fa-2x mb-2"></i>
+                                <div>Export Records</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Record Modal -->
+<div class="modal fade" id="viewRecordModal" tabindex="-1" aria-labelledby="viewRecordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header bg-info bg-opacity-10 text-info">
+                <h5 class="modal-title" id="viewRecordModalLabel">Medical Record Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Record Type</label>
+                            <h5 id="recordType"></h5>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Title</label>
+                            <h5 id="recordTitle"></h5>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Date</label>
+                            <h5 id="recordDate"></h5>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Doctor</label>
+                            <h5 id="recordDoctor"></h5>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Hospital/Clinic</label>
+                            <h5 id="recordHospital"></h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-muted">Description</label>
+                    <div class="p-3 bg-dark rounded border" id="recordDescription"></div>
+                </div>
+                <div id="sensitiveDataSection" class="mb-3">
+                    <label class="form-label text-muted">Sensitive Information</label>
+                    <div class="p-3 bg-dark rounded border" id="recordSensitiveData"></div>
+                </div>
+
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-lock me-2"></i> This record is securely encrypted with AES-256 encryption.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                <a id="editRecordButton" href="#" class="btn btn-info">Edit Record</a>
+                <button type="button" class="btn btn-outline-primary">Download</button>
+                <button type="button" class="btn btn-outline-success">Print</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Record Modal -->
+<div class="modal fade" id="deleteRecordModal" tabindex="-1" aria-labelledby="deleteRecordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteRecordModalLabel">Delete Medical Record</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this medical record? This action cannot be undone.</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i> Deleting this record will permanently remove it from the system.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteRecordForm" method="POST" action="">
+                    <button type="submit" class="btn btn-danger">Delete Record</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Share Records Modal -->
+<div class="modal fade" id="shareRecordsModal" tabindex="-1" aria-labelledby="shareRecordsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="shareRecordsModalLabel">Share Medical Records</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Share With</label>
+                    <select class="form-select mb-3" id="shareRecipientType">
+                        <option value="doctor">Doctor</option>
+                        <option value="hospital">Hospital</option>
+                        <option value="specialist">Specialist</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div id="doctorSearchSection">
+                    <div class="mb-3">
+                        <label class="form-label">Search Doctor</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="Search by name or specialization">
+                            <button class="btn btn-outline-secondary" type="button">Search</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Records to Share</label>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="shareAllRecords" checked>
+                        <label class="form-check-label" for="shareAllRecords">
+                            All medical records
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="shareRecentRecords">
+                        <label class="form-check-label" for="shareRecentRecords">
+                            Only records from last 6 months
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="shareSelectedRecords">
+                        <label class="form-check-label" for="shareSelectedRecords">
+                            Select specific records
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Access Period</label>
+                    <select class="form-select">
+                        <option value="24h">24 hours</option>
+                        <option value="7d">7 days</option>
+                        <option value="30d">30 days</option>
+                        <option value="permanent">Permanent</option>
+                    </select>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="includeSensitiveData">
+                    <label class="form-check-label" for="includeSensitiveData">
+                        Include sensitive information
+                    </label>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="notifyOnAccess">
+                    <label class="form-check-label" for="notifyOnAccess">
+                        Notify me when records are accessed
+                    </label>
+                </div>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> Sharing is secure and encrypted. Recipients will need to authenticate to access these records.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">Share Records</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Records Modal -->
+<div class="modal fade" id="exportRecordsModal" tabindex="-1" aria-labelledby="exportRecordsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exportRecordsModalLabel">Export Medical Records</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Select Records</label>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="exportRecords" id="exportAllRecords" checked>
+                        <label class="form-check-label" for="exportAllRecords">
+                            All medical records
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="exportRecords" id="exportRecentRecords">
+                        <label class="form-check-label" for="exportRecentRecords">
+                            Only records from last year
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="exportRecords" id="exportDateRangeRecords">
+                        <label class="form-check-label" for="exportDateRangeRecords">
+                            Custom date range
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Format</label>
+                    <select class="form-select">
+                        <option value="pdf">PDF Document</option>
+                        <option value="csv">CSV Spreadsheet</option>
+                        <option value="json">JSON</option>
+                    </select>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="includePatientInfo" checked>
+                    <label class="form-check-label" for="includePatientInfo">
+                        Include patient information
+                    </label>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="includeRiskAssessment">
+                    <label class="form-check-label" for="includeRiskAssessment">
+                        Include risk assessment data
+                    </label>
+                </div>
+
+                <div class="alert alert-warning">
+                    <i class="fas fa-shield-alt me-2"></i> The exported file will contain medical information. Please handle it securely.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">Export Records</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filter medical records
+        document.querySelectorAll('[data-filter]').forEach(item => {
+            item.addEventListener('click', event => {
+                event.preventDefault();
+                const filterValue = item.getAttribute('data-filter');
+                const rows = document.querySelectorAll('#medicalRecordsTable tbody tr');
+                
+                rows.forEach(row => {
+                    if (filterValue === 'all' || row.getAttribute('data-record-type') === filterValue) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // View Record Button Click Handler
+        document.querySelectorAll('.view-record-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const recordId = this.getAttribute('data-record-id');
+                
+                // In a real app, this would fetch the record data from the server
+                // For now, we'll use data from the table row
+                const row = this.closest('tr');
+                const cells = row.cells;
+                
+                document.getElementById('recordDate').textContent = cells[0].textContent;
+                document.getElementById('recordType').textContent = cells[1].querySelector('.badge').textContent;
+                document.getElementById('recordTitle').textContent = cells[2].textContent;
+                document.getElementById('recordDoctor').textContent = cells[3].textContent;
+                document.getElementById('recordHospital').textContent = cells[4].textContent;
+                document.getElementById('recordDescription').textContent = "This is the detailed description of the medical record. It contains information about the patient's condition, treatment, and other relevant medical details.";
+                document.getElementById('recordSensitiveData').textContent = "This section contains sensitive medical information that is encrypted for security purposes.";
+                
+                // Set the edit record button URL
+                document.getElementById('editRecordButton').href = `/attender/medical-records/{{ patient.id }}/edit/${recordId}`;
+            });
+        });
+
+        // Delete Record Modal
+        const deleteRecordModal = document.getElementById('deleteRecordModal');
+        deleteRecordModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const recordId = button.getAttribute('data-record-id');
+            
+            // Set the form action
+            document.getElementById('deleteRecordForm').action = `/attender/medical-records/{{ patient.id }}/delete/${recordId}`;
+        });
+    });
+</script>
+{% endblock %}

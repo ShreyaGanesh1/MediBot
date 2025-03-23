@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Dashboard - HealthcareApp{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h1 class="mb-3">Welcome, {{ user.full_name }}</h1>
+            <p class="lead">Your health dashboard provides quick access to all your medical information and healthcare services.</p>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <a href="{{ url_for('patient.emergency') }}" class="btn btn-danger btn-lg">
+                <i class="fas fa-ambulance me-2"></i> Emergency
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Stats Cards -->
+    <div class="row mb-4 g-4">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 bg-dark">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                            <i class="fas fa-user text-primary fa-2x"></i>
+                        </div>
+                        <h5 class="card-title mb-0">Personal Info</h5>
+                    </div>
+                    <p><strong>Name:</strong> {{ user.full_name }}</p>
+                    <p><strong>Age:</strong> {{ user.age }}</p>
+                    <p><strong>Blood Group:</strong> {{ patient_info.blood_group or 'Not specified' }}</p>
+                    <a href="#" class="btn btn-sm btn-outline-primary">Edit Profile</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 border-0 bg-dark">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                            <i class="fas fa-calendar-check text-success fa-2x"></i>
+                        </div>
+                        <h5 class="card-title mb-0">Upcoming Appointments</h5>
+                    </div>
+                    {% if upcoming_appointments %}
+                        {% for appointment in upcoming_appointments %}
+                            <div class="mb-2 pb-2 {% if not loop.last %}border-bottom{% endif %}">
+                                <p class="mb-1"><strong>{{ appointment.date.strftime('%b %d, %Y') }} at {{ appointment.time }}</strong></p>
+                                <p class="mb-1">Dr. {{ appointment.doctor.name }}</p>
+                                <small class="text-muted">{{ appointment.doctor.specialization }}</small>
+                            </div>
+                        {% endfor %}
+                        <a href="#" class="btn btn-sm btn-outline-success">View All</a>
+                    {% else %}
+                        <p>No upcoming appointments.</p>
+                        <a href="#" class="btn btn-sm btn-outline-success">Schedule Appointment</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 border-0 bg-dark">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
+                            <i class="fas fa-file-medical text-info fa-2x"></i>
+                        </div>
+                        <h5 class="card-title mb-0">Recent Medical Records</h5>
+                    </div>
+                    {% if recent_records %}
+                        {% for record in recent_records %}
+                            <div class="mb-2 pb-2 {% if not loop.last %}border-bottom{% endif %}">
+                                <p class="mb-1"><strong>{{ record.title }}</strong></p>
+                                <p class="mb-1">{{ record.record_type }} - {{ record.date.strftime('%b %d, %Y') }}</p>
+                                <small class="text-muted">{{ record.hospital_name or 'No hospital specified' }}</small>
+                            </div>
+                        {% endfor %}
+                        <a href="{{ url_for('patient.health_tracking') }}" class="btn btn-sm btn-outline-info">View All Records</a>
+                    {% else %}
+                        <p>No recent medical records.</p>
+                        <a href="{{ url_for('patient.health_tracking') }}" class="btn btn-sm btn-outline-info">Add Medical Record</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emergency Contacts and Healthcare Services -->
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card border-0 bg-dark">
+                <div class="card-header bg-danger bg-opacity-10 text-danger">
+                    <h5 class="mb-0"><i class="fas fa-phone-alt me-2"></i> Emergency Contacts</h5>
+                </div>
+                <div class="card-body">
+                    {% if emergency_contacts %}
+                        <div class="table-responsive">
+                            <table class="table table-borderless">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Relationship</th>
+                                        <th>Phone</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for contact in emergency_contacts %}
+                                        <tr>
+                                            <td>{{ contact.name }}</td>
+                                            <td>{{ contact.relationship }}</td>
+                                            <td>{{ contact.phone_number }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p>No emergency contacts added.</p>
+                    {% endif %}
+                    <a href="#" class="btn btn-sm btn-outline-danger">Manage Contacts</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-0 bg-dark">
+                <div class="card-header bg-primary bg-opacity-10 text-primary">
+                    <h5 class="mb-0"><i class="fas fa-stethoscope me-2"></i> Healthcare Services</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <a href="{{ url_for('patient.hospitals') }}" class="text-decoration-none">
+                                <div class="card bg-dark border">
+                                    <div class="card-body text-center py-4">
+                                        <i class="fas fa-hospital fa-2x mb-2 text-info"></i>
+                                        <h6>Find Hospitals</h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="{{ url_for('patient.doctors') }}" class="text-decoration-none">
+                                <div class="card bg-dark border">
+                                    <div class="card-body text-center py-4">
+                                        <i class="fas fa-user-md fa-2x mb-2 text-success"></i>
+                                        <h6>Consult Doctors</h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="{{ url_for('mental_health.chat') }}" class="text-decoration-none">
+                                <div class="card bg-dark border">
+                                    <div class="card-body text-center py-4">
+                                        <i class="fas fa-brain fa-2x mb-2 text-warning"></i>
+                                        <h6>Mental Health</h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="{{ url_for('insurance.calculator') }}" class="text-decoration-none">
+                                <div class="card bg-dark border">
+                                    <div class="card-body text-center py-4">
+                                        <i class="fas fa-shield-alt fa-2x mb-2 text-secondary"></i>
+                                        <h6>Insurance</h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Medical Information -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 bg-dark">
+                <div class="card-header bg-info bg-opacity-10 text-info">
+                    <h5 class="mb-0"><i class="fas fa-notes-medical me-2"></i> Medical Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% if patient_info %}
+                            <div class="col-md-6">
+                                <h6>Chronic Diseases</h6>
+                                <p>{{ patient_info.chronic_diseases or 'None' }}</p>
+                                
+                                <h6>Known Allergies</h6>
+                                <p>{{ patient_info.known_allergies or 'None' }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Current Medications</h6>
+                                <p>{{ patient_info.current_medications or 'None' }}</p>
+                            </div>
+                        {% else %}
+                            <div class="col-12">
+                                <p>No medical information available. Please update your profile.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <a href="#" class="btn btn-sm btn-outline-info">Update Medical Information</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

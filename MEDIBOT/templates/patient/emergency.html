@@ -1,0 +1,558 @@
+{% extends "base.html" %}
+
+{% block title %}Emergency Services - MediBot{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+      crossorigin="" />
+<style>
+    #map, #offline-map {
+        height: 400px;
+        width: 100%;
+        border-radius: 0.25rem;
+    }
+    .emergency-btn {
+        height: 150px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 75px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.5);
+        transition: all 0.3s ease;
+    }
+    .emergency-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 12px rgba(220, 53, 69, 0.6);
+    }
+    .emergency-btn:active {
+        transform: scale(0.98);
+    }
+    .pulse {
+        animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 15px rgba(220, 53, 69, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="text-danger"><i class="fas fa-ambulance me-2"></i>Emergency Services</h1>
+            <p class="lead">In case of emergency, use the buttons below to quickly get help.</p>
+        </div>
+    </div>
+
+    <div class="row mb-5">
+        <div class="col-md-6 mb-4 mb-md-0">
+            <div class="card h-100 border-0 bg-dark shadow">
+                <div class="card-body p-4 text-center">
+                    <h3 class="mb-4">Online Emergency</h3>
+                    <p>Sends your current location to emergency services and notifies your emergency contacts.</p>
+                    <button id="onlineEmergencyBtn" class="btn btn-danger emergency-btn w-100 pulse">
+                        <i class="fas fa-exclamation-triangle me-2"></i> EMERGENCY
+                    </button>
+                    <div id="emergencyStatus" class="mt-3" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card h-100 border-0 bg-dark shadow">
+                <div class="card-body p-4 text-center">
+                    <h3 class="mb-4">Offline Emergency</h3>
+                    <p>Works without internet. Sends SMS alerts to emergency contacts and nearby hospitals.</p>
+                    <button id="offlineEmergencyBtn" class="btn btn-outline-danger emergency-btn w-100">
+                        <i class="fas fa-wifi-slash me-2"></i> OFFLINE EMERGENCY
+                    </button>
+                    <div id="offlineEmergencyStatus" class="mt-3" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 bg-dark shadow">
+                <div class="card-header bg-danger bg-opacity-10 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-danger"><i class="fas fa-map-marker-alt me-2"></i>Nearby Hospitals</h5>
+                    <div>
+                        <a href="{{ url_for('patient.get_offline_map_data_page') }}" class="btn btn-sm btn-outline-success me-2">
+                            <i class="fas fa-download me-1"></i> Get Offline Data
+                        </a>
+                        <button id="toggleMapBtn" class="btn btn-sm btn-outline-info me-2">
+                            <i class="fas fa-exchange-alt me-1"></i> Toggle Online/Offline Map
+                        </button>
+                        <button id="refreshMapBtn" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-sync-alt me-1"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="map" class="mb-3"></div>
+                    <div id="offline-map" class="mb-3" style="display: none;"></div>
+                    <div class="table-responsive">
+                        <table class="table table-borderless" id="hospitalsTable">
+                            <thead>
+                                <tr>
+                                    <th>Hospital Name</th>
+                                    <th>Distance</th>
+                                    <th>Contact</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for hospital in nearby_hospitals %}
+                                <tr>
+                                    <td>{{ hospital.name }}</td>
+                                    <td>{{ hospital.distance }} km</td>
+                                    <td>
+                                        <a href="tel:{{ hospital.emergency_number or hospital.phone_number }}" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-phone-alt me-1"></i> Call
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary get-directions" 
+                                                data-lat="{{ hospital.latitude }}" 
+                                                data-lng="{{ hospital.longitude }}"
+                                                data-name="{{ hospital.name }}">
+                                            <i class="fas fa-directions me-1"></i> Directions
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6 mb-4 mb-md-0">
+            <div class="card border-0 bg-dark shadow">
+                <div class="card-header bg-danger bg-opacity-10">
+                    <h5 class="mb-0 text-danger"><i class="fas fa-phone-alt me-2"></i>Emergency Contacts</h5>
+                </div>
+                <div class="card-body">
+                    {% if emergency_contacts %}
+                        <div class="list-group list-group-flush">
+                            {% for contact in emergency_contacts %}
+                                <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ contact.name }}</h6>
+                                        <p class="mb-1 small text-muted">{{ contact.relationship }}</p>
+                                    </div>
+                                    <div>
+                                        <a href="tel:{{ contact.phone_number }}" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-phone-alt"></i>
+                                        </a>
+                                        {% if contact.email %}
+                                            <a href="mailto:{{ contact.email }}" class="btn btn-sm btn-outline-secondary ms-1">
+                                                <i class="fas fa-envelope"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p>No emergency contacts found. Please add emergency contacts in your profile.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card border-0 bg-dark shadow">
+                <div class="card-header bg-danger bg-opacity-10">
+                    <h5 class="mb-0 text-danger"><i class="fas fa-first-aid me-2"></i>Emergency Services Hotlines</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">Emergency Services</h6>
+                                <p class="mb-1 small text-muted">Police, Fire, Ambulance</p>
+                            </div>
+                            <a href="tel:911" class="btn btn-danger">
+                                <i class="fas fa-phone-alt me-2"></i>911
+                            </a>
+                        </div>
+                        <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">Poison Control Center</h6>
+                                <p class="mb-1 small text-muted">For poisoning emergencies</p>
+                            </div>
+                            <a href="tel:18002221222" class="btn btn-outline-danger">
+                                <i class="fas fa-phone-alt me-2"></i>1-800-222-1222
+                            </a>
+                        </div>
+                        <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">Suicide Prevention Lifeline</h6>
+                                <p class="mb-1 small text-muted">24/7 support for mental health crisis</p>
+                            </div>
+                            <a href="tel:18002738255" class="btn btn-outline-danger">
+                                <i class="fas fa-phone-alt me-2"></i>1-800-273-8255
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emergency Instructions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 bg-dark shadow">
+                <div class="card-header bg-danger bg-opacity-10">
+                    <h5 class="mb-0 text-danger"><i class="fas fa-book-medical me-2"></i>Emergency Instructions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="emergencyInstructions">
+                        <div class="accordion-item bg-dark">
+                            <h2 class="accordion-header" id="headingOne">
+                                <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                    CPR Instructions
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#emergencyInstructions">
+                                <div class="accordion-body">
+                                    <ol>
+                                        <li>Check the scene for safety and if the person is unresponsive.</li>
+                                        <li>Call 911 or ask someone else to call.</li>
+                                        <li>Place the person on their back on a firm surface.</li>
+                                        <li>Kneel beside the person's neck and shoulders.</li>
+                                        <li>Place the heel of your hand on the center of the person's chest.</li>
+                                        <li>Place your other hand on top of the first hand.</li>
+                                        <li>Position your body directly over your hands.</li>
+                                        <li>Perform 30 chest compressions (push hard and fast at a rate of 100-120 compressions per minute).</li>
+                                        <li>Give 2 rescue breaths (open the airway and breathe into the person's mouth).</li>
+                                        <li>Continue the cycle of 30 compressions and 2 breaths until help arrives.</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item bg-dark">
+                            <h2 class="accordion-header" id="headingTwo">
+                                <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                    Choking First Aid
+                                </button>
+                            </h2>
+                            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#emergencyInstructions">
+                                <div class="accordion-body">
+                                    <ol>
+                                        <li>Stand behind the person and slightly to one side.</li>
+                                        <li>Support their chest with one hand.</li>
+                                        <li>Lean the person forward so the object blocking their airway will come out of their mouth, not go further down.</li>
+                                        <li>Give up to 5 sharp blows between the person's shoulder blades with the heel of your hand.</li>
+                                        <li>If backslaps don't work, try abdominal thrusts (Heimlich maneuver):</li>
+                                        <ul>
+                                            <li>Stand behind the person and wrap your arms around their waist.</li>
+                                            <li>Make a fist with one hand and place it just above their belly button.</li>
+                                            <li>Grasp your fist with your other hand and pull sharply inwards and upwards.</li>
+                                            <li>Repeat up to 5 times.</li>
+                                        </ul>
+                                        <li>If the person is still choking, call 911 immediately.</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item bg-dark">
+                            <h2 class="accordion-header" id="headingThree">
+                                <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                    Severe Bleeding
+                                </button>
+                            </h2>
+                            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#emergencyInstructions">
+                                <div class="accordion-body">
+                                    <ol>
+                                        <li>Call 911 immediately.</li>
+                                        <li>Remove any obvious dirt or debris from the wound.</li>
+                                        <li>Apply firm, steady pressure directly on the wound using a clean cloth, bandage, or your hand if nothing else is available.</li>
+                                        <li>Maintain pressure until emergency help arrives.</li>
+                                        <li>If blood soaks through the cloth, add another cloth without removing the first one.</li>
+                                        <li>If possible, elevate the wounded area above the heart.</li>
+                                        <li>Secure the bandage with tape or continue to maintain pressure.</li>
+                                        <li>If the person goes into shock, lay them flat, elevate their feet about 12 inches, and cover them with a blanket.</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Emergency Alert Modal -->
+<div class="modal fade" id="emergencyModal" tabindex="-1" aria-labelledby="emergencyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="emergencyModalLabel">Emergency Alert</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="spinner-border text-danger mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h4 id="emergencyModalMessage">Sending emergency alerts...</h4>
+                <p class="mb-0" id="emergencyModalDetails">Please wait while we contact emergency services and your emergency contacts.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://maps.googleapis.com/maps/api/js?key={{ config.GOOGLE_MAPS_API_KEY }}&callback=initMap" async defer></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+        crossorigin=""></script>
+<script src="{{ url_for('static', filename='js/emergency.js') }}"></script>
+<script>
+    let map;
+    let userMarker;
+    let hospitalMarkers = [];
+    let directionsService;
+    let directionsRenderer;
+    let currentPosition = {
+        lat: {{ current_location.latitude }},
+        lng: {{ current_location.longitude }}
+    };
+    
+    // Create an array of nearby hospitals for offline map
+    window.nearby_hospitals = [
+        {% for hospital in nearby_hospitals %}
+        {
+            name: "{{ hospital.name }}",
+            address: "{{ hospital.address }}",
+            latitude: {{ hospital.latitude }},
+            longitude: {{ hospital.longitude }},
+            distance: {{ hospital.distance }},
+            phone_number: "{{ hospital.phone_number }}",
+            emergency_number: "{{ hospital.emergency_number or '' }}"
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+            center: currentPosition,
+            zoom: 13,
+            styles: [
+                { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+                { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+                { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+                {
+                    featureType: "administrative.locality",
+                    elementType: "labels.text.fill",
+                    stylers: [{ color: "#d59563" }],
+                },
+                {
+                    featureType: "poi",
+                    elementType: "labels.text.fill",
+                    stylers: [{ color: "#d59563" }],
+                },
+                {
+                    featureType: "poi.park",
+                    elementType: "geometry",
+                    stylers: [{ color: "#263c3f" }],
+                },
+                {
+                    featureType: "poi.park",
+                    elementType: "labels.text.fill",
+                    stylers: [{ color: "#6b9a76" }],
+                },
+                {
+                    featureType: "road",
+                    elementType: "geometry",
+                    stylers: [{ color: "#38414e" }],
+                },
+                {
+                    featureType: "road",
+                    elementType: "geometry.stroke",
+                    stylers: [{ color: "#212a37" }],
+                },
+                {
+                    featureType: "road",
+                    elementType: "labels.text.fill",
+                    stylers: [{ color: "#9ca5b3" }],
+                },
+                {
+                    featureType: "road.highway",
+                    elementType: "geometry",
+                    stylers: [{ color: "#746855" }],
+                },
+                {
+                    featureType: "road.highway",
+                    elementType: "geometry.stroke",
+                    stylers: [{ color: "#1f2835" }],
+                },
+                {
+                    featureType: "road.highway",
+                    elementType: "labels.text.fill",
+                    stylers: [{ color: "#f3d19c" }],
+                },
+                {
+                    featureType: "transit",
+                    elementType: "geometry",
+                    stylers: [{ color: "#2f3948" }],
+                },
+                {
+                    featureType: "transit.station",
+                    elementType: "labels.text.fill",
+                    stylers: [{ color: "#d59563" }],
+                },
+                {
+                    featureType: "water",
+                    elementType: "geometry",
+                    stylers: [{ color: "#17263c" }],
+                },
+                {
+                    featureType: "water",
+                    elementType: "labels.text.fill",
+                    stylers: [{ color: "#515c6d" }],
+                },
+                {
+                    featureType: "water",
+                    elementType: "labels.text.stroke",
+                    stylers: [{ color: "#17263c" }],
+                },
+            ]
+        });
+
+        // Add user marker
+        userMarker = new google.maps.Marker({
+            position: currentPosition,
+            map: map,
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 10,
+                fillColor: "#4285F4",
+                fillOpacity: 1,
+                strokeColor: "#FFFFFF",
+                strokeWeight: 2
+            },
+            title: "Your Location"
+        });
+
+        // Add hospital markers
+        {% for hospital in nearby_hospitals %}
+        const hospitalPosition = {
+            lat: {{ hospital.latitude }},
+            lng: {{ hospital.longitude }}
+        };
+
+        const hospitalMarker = new google.maps.Marker({
+            position: hospitalPosition,
+            map: map,
+            icon: {
+                url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png"
+            },
+            title: "{{ hospital.name }}"
+        });
+
+        const infoWindow = new google.maps.InfoWindow({
+            content: `
+                <div style="color: black;">
+                    <h5>{{ hospital.name }}</h5>
+                    <p>{{ hospital.address }}</p>
+                    <p>Distance: {{ hospital.distance }} km</p>
+                    <p>Phone: {{ hospital.phone_number }}</p>
+                    <p>Emergency: {{ hospital.emergency_number or 'N/A' }}</p>
+                </div>
+            `
+        });
+
+        hospitalMarker.addListener('click', () => {
+            infoWindow.open(map, hospitalMarker);
+        });
+
+        hospitalMarkers.push(hospitalMarker);
+        {% endfor %}
+
+        // Initialize directions service and renderer
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer({
+            map: map,
+            polylineOptions: {
+                strokeColor: '#dc3545',
+                strokeWeight: 5
+            }
+        });
+
+        // Add event listeners to direction buttons
+        document.querySelectorAll('.get-directions').forEach(button => {
+            button.addEventListener('click', function() {
+                const lat = parseFloat(this.getAttribute('data-lat'));
+                const lng = parseFloat(this.getAttribute('data-lng'));
+                const hospitalName = this.getAttribute('data-name');
+                getDirections(lat, lng, hospitalName);
+            });
+        });
+    }
+
+    function getDirections(destLat, destLng, hospitalName) {
+        const destination = new google.maps.LatLng(destLat, destLng);
+        const origin = new google.maps.LatLng(currentPosition.lat, currentPosition.lng);
+
+        directionsService.route(
+            {
+                origin: origin,
+                destination: destination,
+                travelMode: google.maps.TravelMode.DRIVING
+            },
+            (response, status) => {
+                if (status === "OK") {
+                    directionsRenderer.setDirections(response);
+                    
+                    // Display route information
+                    const route = response.routes[0];
+                    const leg = route.legs[0];
+                    
+                    // Scroll to map
+                    document.getElementById('map').scrollIntoView({ behavior: 'smooth' });
+                    
+                    // Alert with directions info
+                    alert(`Directions to ${hospitalName}\nDistance: ${leg.distance.text}\nEstimated time: ${leg.duration.text}`);
+                } else {
+                    alert("Directions request failed due to " + status);
+                }
+            }
+        );
+    }
+
+    // Refresh map
+    document.getElementById('refreshMapBtn').addEventListener('click', function() {
+        // In a real app, this would update the user's current location
+        // For demo purposes, we'll just recenter the map
+        map.setCenter(currentPosition);
+        map.setZoom(13);
+        
+        // Clear any directions
+        directionsRenderer.setDirections({routes: []});
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,653 @@
+{% extends "base.html" %}
+
+{% block title %}Insurance Management - {{ patient.full_name }} - HealthcareApp{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-3">
+        <div class="col">
+            <a href="{{ url_for('attender.dashboard') }}" class="btn btn-outline-secondary mb-3">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+            <h1><i class="fas fa-shield-alt me-2 text-success"></i>Insurance Management</h1>
+            <p class="lead">Manage and track {{ patient.full_name }}'s insurance policies and coverage.</p>
+        </div>
+    </div>
+
+    <!-- Insurance Summary -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-4 mb-md-0">
+            <div class="card border-0 bg-dark shadow h-100">
+                <div class="card-header bg-success bg-opacity-10">
+                    <h5 class="mb-0 text-success"><i class="fas fa-user-shield me-2"></i>Insurance Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="rounded-circle bg-success bg-opacity-10 mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            <i class="fas fa-user text-success fa-3x"></i>
+                        </div>
+                        <h5>{{ patient.full_name }}</h5>
+                        <p class="text-muted">{{ patient.age }} years old</p>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Active Policies:</span>
+                        <span class="badge bg-success px-3 py-2">{{ user_insurances|selectattr('status', 'equalto', 'active')|list|length }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Total Coverage:</span>
+                        <span class="fw-bold">${{ user_insurances|sum(attribute='policy.coverage_amount')|int }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Monthly Premium:</span>
+                        <span class="fw-bold">${{ user_insurances|selectattr('payment_frequency', 'equalto', 'monthly')|sum(attribute='premium_amount')|round(2) }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Next Payment:</span>
+                        {% if user_insurances %}
+                            <span class="badge bg-warning px-3 py-2">{{ user_insurances[0].end_date.strftime('%b %d, %Y') }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary px-3 py-2">N/A</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-grid mt-4">
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#calculatorModal">
+                            <i class="fas fa-calculator me-2"></i>Insurance Calculator
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card border-0 bg-dark shadow">
+                <div class="card-header bg-success bg-opacity-10 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-success"><i class="fas fa-clipboard-list me-2"></i>Active Insurance Policies</h5>
+                    <a href="{{ url_for('insurance.policies') }}" class="btn btn-sm btn-outline-success">
+                        <i class="fas fa-plus me-1"></i> Add Policy
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if user_insurances %}
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Policy Name</th>
+                                        <th>Provider</th>
+                                        <th>Coverage</th>
+                                        <th>Premium</th>
+                                        <th>Expiry</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for insurance in user_insurances %}
+                                        <tr>
+                                            <td>{{ insurance.policy.name }}</td>
+                                            <td>{{ insurance.policy.provider }}</td>
+                                            <td>${{ insurance.policy.coverage_amount|int }}</td>
+                                            <td>
+                                                ${{ insurance.premium_amount|round(2) }}/{{ insurance.payment_frequency }}
+                                            </td>
+                                            <td>
+                                                {% set days_left = (insurance.end_date - today).days %}
+                                                <span class="badge {% if days_left < 30 %}bg-danger{% elif days_left < 90 %}bg-warning{% else %}bg-success{% endif %}">
+                                                    {{ insurance.end_date.strftime('%b %d, %Y') }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <a href="{{ url_for('insurance.view', insurance_id=insurance.id) }}" class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#renewModal" data-policy-id="{{ insurance.id }}" data-policy-name="{{ insurance.policy.name }}">
+                                                        <i class="fas fa-sync-alt"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal" data-policy-id="{{ insurance.id }}" data-policy-name="{{ insurance.policy.name }}">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-shield-alt fa-4x text-muted mb-3"></i>
+                            <h4>No Insurance Policies Found</h4>
+                            <p>Add insurance coverage to protect against medical expenses.</p>
+                            <a href="{{ url_for('insurance.policies') }}" class="btn btn-success">
+                                <i class="fas fa-plus me-1"></i> Add Insurance Policy
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommended Insurance and Payment Reminders -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-8">
+            <div class="card border-0 bg-dark shadow h-100">
+                <div class="card-header bg-primary bg-opacity-10">
+                    <h5 class="mb-0 text-primary"><i class="fas fa-star me-2"></i>AI Recommended Insurance</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">Based on {{ patient.full_name }}'s medical history and risk assessment, we recommend the following insurance policies:</p>
+                    
+                    <div class="row row-cols-1 row-cols-md-3 g-4">
+                        {% for policy in recommended_policies %}
+                            <div class="col">
+                                <div class="card h-100 border border-primary bg-primary bg-opacity-5">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ policy.name }}</h5>
+                                        <h6 class="card-subtitle mb-2 text-muted">{{ policy.provider }}</h6>
+                                        <p class="card-text small">{{ policy.description|truncate(100) }}</p>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="small">Coverage:</span>
+                                            <span class="fw-bold">${{ policy.coverage_amount|int }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <span class="small">Premium:</span>
+                                            <span class="fw-bold">${{ policy.premium|round(2) }}/year</span>
+                                        </div>
+                                        <div class="d-grid">
+                                            <a href="{{ url_for('insurance.apply', policy_id=policy.id) }}" class="btn btn-sm btn-primary">Apply Now</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="col-12">
+                                <div class="alert alert-info mb-0">
+                                    <i class="fas fa-info-circle me-2"></i> No additional insurance recommendations at this time.
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 bg-dark shadow h-100">
+                <div class="card-header bg-warning bg-opacity-10">
+                    <h5 class="mb-0 text-warning"><i class="fas fa-bell me-2"></i>Payment Reminders</h5>
+                </div>
+                <div class="card-body">
+                    {% if user_insurances %}
+                        <div class="list-group list-group-flush">
+                            {% for insurance in user_insurances %}
+                                {% set days_left = (insurance.end_date - today).days %}
+                                <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ insurance.policy.name }}</h6>
+                                        <p class="mb-0 small text-muted">
+                                            {{ insurance.payment_frequency|capitalize }} payment: ${{ insurance.premium_amount|round(2) }}
+                                        </p>
+                                    </div>
+                                    <span class="badge {% if days_left < 30 %}bg-danger{% elif days_left < 90 %}bg-warning{% else %}bg-success{% endif %}">
+                                        {% if days_left < 0 %}
+                                            Overdue
+                                        {% elif days_left == 0 %}
+                                            Today
+                                        {% else %}
+                                            {{ days_left }} days
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p class="text-muted mb-0">No payment reminders available</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <button class="btn btn-sm btn-outline-warning">
+                        <i class="fas fa-cog me-1"></i> Reminder Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Claims History -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 bg-dark shadow">
+                <div class="card-header bg-info bg-opacity-10 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-info"><i class="fas fa-file-invoice-dollar me-2"></i>Claims History</h5>
+                    <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#newClaimModal">
+                        <i class="fas fa-plus me-1"></i> File New Claim
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> Claims history will appear here once claims have been filed.
+                    </div>
+                    
+                    <div class="text-center py-4">
+                        <i class="fas fa-file-invoice-dollar fa-4x text-muted mb-3"></i>
+                        <h4>No Claims History</h4>
+                        <p>No insurance claims have been filed or processed yet.</p>
+                        <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#newClaimModal">
+                            <i class="fas fa-plus me-1"></i> File Your First Claim
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Insurance Calculator Modal -->
+<div class="modal fade" id="calculatorModal" tabindex="-1" aria-labelledby="calculatorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="calculatorModalLabel">Insurance Calculator</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="calculatorForm">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="policyType" class="form-label">Policy Type</label>
+                            <select class="form-select" id="policyType">
+                                <option value="">Select Policy Type</option>
+                                <option value="health">Health Insurance</option>
+                                <option value="critical">Critical Illness</option>
+                                <option value="accident">Accident Cover</option>
+                                <option value="hospital">Hospital Cash</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="coverageAmount" class="form-label">Coverage Amount</label>
+                            <select class="form-select" id="coverageAmount">
+                                <option value="100000">$100,000</option>
+                                <option value="250000">$250,000</option>
+                                <option value="500000">$500,000</option>
+                                <option value="1000000">$1,000,000</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="patientAge" class="form-label">Patient Age</label>
+                            <input type="number" class="form-control" id="patientAge" value="{{ patient.age }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="preExistingConditions" class="form-label">Pre-existing Conditions</label>
+                            <select class="form-select" id="preExistingConditions">
+                                <option value="no">None</option>
+                                <option value="minor">Minor (e.g., Hypertension)</option>
+                                <option value="moderate">Moderate (e.g., Diabetes)</option>
+                                <option value="severe">Severe (e.g., Heart Disease)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="familyHistory" class="form-label">Family Medical History</label>
+                            <select class="form-select" id="familyHistory">
+                                <option value="no">No significant history</option>
+                                <option value="minor">Minor concerns</option>
+                                <option value="significant">Significant history</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="paymentFrequency" class="form-label">Payment Frequency</label>
+                            <select class="form-select" id="paymentFrequency">
+                                <option value="monthly">Monthly</option>
+                                <option value="quarterly">Quarterly</option>
+                                <option value="annually">Annually</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> This calculator provides an estimate only. Actual premiums may vary based on underwriting and other factors.
+                    </div>
+                </form>
+                
+                <div id="calculationResult" style="display: none;">
+                    <hr>
+                    <h5 class="mb-3">Estimated Premium</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="card bg-dark border">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">Monthly</h6>
+                                    <h3 class="card-text text-success" id="monthlyPremium">$0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card bg-dark border">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">Quarterly</h6>
+                                    <h3 class="card-text text-success" id="quarterlyPremium">$0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card bg-dark border">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">Annually</h6>
+                                    <h3 class="card-text text-success" id="annualPremium">$0</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="calculateBtn">Calculate Premium</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Renew Policy Modal -->
+<div class="modal fade" id="renewModal" tabindex="-1" aria-labelledby="renewModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="renewModalLabel">Renew Insurance Policy</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>You are about to renew <span id="renewPolicyName" class="fw-bold"></span>.</p>
+                
+                <div class="mb-3">
+                    <label for="renewPeriod" class="form-label">Renewal Period</label>
+                    <select class="form-select" id="renewPeriod">
+                        <option value="1">1 Year</option>
+                        <option value="2">2 Years</option>
+                        <option value="3">3 Years</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="renewPaymentFrequency" class="form-label">Payment Frequency</label>
+                    <select class="form-select" id="renewPaymentFrequency">
+                        <option value="monthly">Monthly</option>
+                        <option value="quarterly">Quarterly</option>
+                        <option value="annually">Annually</option>
+                    </select>
+                </div>
+                
+                <div class="alert alert-success">
+                    <i class="fas fa-info-circle me-2"></i> Renewing now may qualify you for loyalty discounts.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="confirmRenewBtn">Renew Policy</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Policy Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="cancelModalLabel">Cancel Insurance Policy</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to cancel <span id="cancelPolicyName" class="fw-bold"></span>?</p>
+                
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i> Canceling this policy may result in:
+                    <ul class="mb-0 mt-2">
+                        <li>Loss of coverage for medical expenses</li>
+                        <li>Waiting periods if you choose to re-enroll later</li>
+                        <li>Potential cancellation fees</li>
+                    </ul>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="cancellationReason" class="form-label">Reason for Cancellation</label>
+                    <select class="form-select" id="cancellationReason">
+                        <option value="">Select a reason</option>
+                        <option value="cost">Cost too high</option>
+                        <option value="coverage">Inadequate coverage</option>
+                        <option value="switching">Switching to another provider</option>
+                        <option value="other">Other reason</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Policy</button>
+                <button type="button" class="btn btn-danger" id="confirmCancelBtn">Cancel Policy</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- File New Claim Modal -->
+<div class="modal fade" id="newClaimModal" tabindex="-1" aria-labelledby="newClaimModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newClaimModalLabel">File Insurance Claim</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newClaimForm">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="claimPolicy" class="form-label">Insurance Policy</label>
+                            <select class="form-select" id="claimPolicy" required>
+                                <option value="">Select Policy</option>
+                                {% for insurance in user_insurances %}
+                                    <option value="{{ insurance.id }}">{{ insurance.policy.name }} ({{ insurance.policy_number }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="claimType" class="form-label">Claim Type</label>
+                            <select class="form-select" id="claimType" required>
+                                <option value="">Select Type</option>
+                                <option value="hospitalization">Hospitalization</option>
+                                <option value="surgery">Surgery</option>
+                                <option value="consultation">Doctor Consultation</option>
+                                <option value="medication">Medication/Pharmacy</option>
+                                <option value="diagnostic">Diagnostic Tests</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="claimDate" class="form-label">Date of Service</label>
+                            <input type="date" class="form-control" id="claimDate" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="claimAmount" class="form-label">Claim Amount</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="claimAmount" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="claimDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="claimDescription" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="providerName" class="form-label">Healthcare Provider Name</label>
+                        <input type="text" class="form-control" id="providerName" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Required Documents</label>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> Please upload the following documents to process your claim:
+                            <ul class="mb-0 mt-2">
+                                <li>Medical bills/receipts</li>
+                                <li>Doctor's prescription or medical report</li>
+                                <li>Any additional supporting documents</li>
+                            </ul>
+                        </div>
+                        <input type="file" class="form-control" multiple>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="submitClaimBtn">Submit Claim</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Insurance Calculator
+        document.getElementById('calculateBtn').addEventListener('click', function() {
+            const policyType = document.getElementById('policyType').value;
+            const coverageAmount = parseFloat(document.getElementById('coverageAmount').value);
+            const patientAge = parseInt(document.getElementById('patientAge').value);
+            const preExistingConditions = document.getElementById('preExistingConditions').value;
+            const familyHistory = document.getElementById('familyHistory').value;
+            
+            if (!policyType || isNaN(coverageAmount) || isNaN(patientAge)) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            // Calculate base premium (simplified calculation for demonstration)
+            let basePremium = coverageAmount * 0.05 / 12; // 5% of coverage annually, divided by 12 for monthly
+            
+            // Adjust for age
+            if (patientAge > 60) {
+                basePremium *= 1.5;
+            } else if (patientAge > 40) {
+                basePremium *= 1.2;
+            }
+            
+            // Adjust for pre-existing conditions
+            if (preExistingConditions === 'severe') {
+                basePremium *= 1.5;
+            } else if (preExistingConditions === 'moderate') {
+                basePremium *= 1.3;
+            } else if (preExistingConditions === 'minor') {
+                basePremium *= 1.1;
+            }
+            
+            // Adjust for family history
+            if (familyHistory === 'significant') {
+                basePremium *= 1.2;
+            } else if (familyHistory === 'minor') {
+                basePremium *= 1.1;
+            }
+            
+            // Calculate different payment frequencies
+            const monthlyPremium = basePremium.toFixed(2);
+            const quarterlyPremium = (basePremium * 3 * 0.98).toFixed(2); // 2% discount
+            const annualPremium = (basePremium * 12 * 0.9).toFixed(2); // 10% discount
+            
+            // Display results
+            document.getElementById('monthlyPremium').textContent = '$' + monthlyPremium;
+            document.getElementById('quarterlyPremium').textContent = '$' + quarterlyPremium;
+            document.getElementById('annualPremium').textContent = '$' + annualPremium;
+            document.getElementById('calculationResult').style.display = 'block';
+        });
+        
+        // Renew Policy Modal
+        const renewModal = document.getElementById('renewModal');
+        renewModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const policyId = button.getAttribute('data-policy-id');
+            const policyName = button.getAttribute('data-policy-name');
+            
+            document.getElementById('renewPolicyName').textContent = policyName;
+        });
+        
+        // Confirm Renew Button
+        document.getElementById('confirmRenewBtn').addEventListener('click', function() {
+            const renewPeriod = document.getElementById('renewPeriod').value;
+            const renewPaymentFrequency = document.getElementById('renewPaymentFrequency').value;
+            
+            // In a real app, this would submit the renewal request to the server
+            alert(`Policy renewed for ${renewPeriod} year(s) with ${renewPaymentFrequency} payments.`);
+            
+            // Close the modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('renewModal'));
+            modal.hide();
+        });
+        
+        // Cancel Policy Modal
+        const cancelModal = document.getElementById('cancelModal');
+        cancelModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const policyId = button.getAttribute('data-policy-id');
+            const policyName = button.getAttribute('data-policy-name');
+            
+            document.getElementById('cancelPolicyName').textContent = policyName;
+        });
+        
+        // Confirm Cancel Button
+        document.getElementById('confirmCancelBtn').addEventListener('click', function() {
+            const cancellationReason = document.getElementById('cancellationReason').value;
+            
+            if (!cancellationReason) {
+                alert('Please select a reason for cancellation');
+                return;
+            }
+            
+            // In a real app, this would submit the cancellation request to the server
+            alert('Policy has been cancelled.');
+            
+            // Close the modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('cancelModal'));
+            modal.hide();
+        });
+        
+        // Submit Claim Button
+        document.getElementById('submitClaimBtn').addEventListener('click', function() {
+            const claimPolicy = document.getElementById('claimPolicy').value;
+            const claimType = document.getElementById('claimType').value;
+            const claimDate = document.getElementById('claimDate').value;
+            const claimAmount = document.getElementById('claimAmount').value;
+            const claimDescription = document.getElementById('claimDescription').value;
+            const providerName = document.getElementById('providerName').value;
+            
+            if (!claimPolicy || !claimType || !claimDate || !claimAmount || !claimDescription || !providerName) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            // In a real app, this would submit the claim to the server
+            alert('Claim submitted successfully! Your claim will be processed within 3-5 business days.');
+            
+            // Close the modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('newClaimModal'));
+            modal.hide();
+        });
+    });
+</script>
+{% endblock %}

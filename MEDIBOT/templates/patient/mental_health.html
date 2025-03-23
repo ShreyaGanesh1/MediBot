@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+
+{% block title %}Mental Health Support - HealthcareApp{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1><i class="fas fa-brain me-2 text-warning"></i>Mental Health Support</h1>
+            <p class="lead">Access resources, support, and AI-powered assistance for your mental wellbeing.</p>
+        </div>
+    </div>
+
+    <div class="row mb-5">
+        <div class="col-md-6">
+            <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" class="d-none">
+            <!-- Using SVG for clean visualization instead of external image -->
+            <svg viewBox="0 0 600 400" class="img-fluid rounded mb-4">
+                <rect width="600" height="400" fill="#2b343b" rx="10" ry="10"/>
+                <circle cx="300" cy="180" r="100" fill="#ffc10730" stroke="#ffc107" stroke-width="3"/>
+                <path d="M240,200 C240,150 360,150 360,200 C360,300 240,300 240,200" fill="#0d6efd30" stroke="#0d6efd" stroke-width="3"/>
+                <path d="M200,220 L400,220" stroke="#ffffff20" stroke-width="2"/>
+                <text x="300" y="320" fill="#fff" font-size="24" text-anchor="middle">Mental Wellbeing</text>
+                <path d="M300,180 L340,130" stroke="#20c99770" stroke-width="3"/>
+                <circle cx="360" cy="120" r="20" fill="#20c99730" stroke="#20c997" stroke-width="2"/>
+                <path d="M300,180 L240,140" stroke="#dc354570" stroke-width="3"/>
+                <circle cx="220" cy="130" r="20" fill="#dc354530" stroke="#dc3545" stroke-width="2"/>
+            </svg>
+            
+            <div class="card border-0 bg-dark shadow mb-4">
+                <div class="card-body">
+                    <h4 class="card-title"><i class="fas fa-quote-left text-warning me-2"></i>You're Not Alone</h4>
+                    <p class="card-text">Mental health is just as important as physical health. Our AI-assisted mental health services provide confidential support and resources to help you navigate life's challenges.</p>
+                    <p class="card-text">Whether you're dealing with stress, anxiety, depression, or just need someone to talk to, we're here to help.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-0 bg-dark shadow h-100">
+                <div class="card-header bg-warning bg-opacity-10 text-warning">
+                    <h4 class="mb-0"><i class="fas fa-tasks me-2"></i>Mental Health Services</h4>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <a href="{{ url_for('mental_health.chat') }}" class="list-group-item list-group-item-action bg-transparent d-flex align-items-center">
+                            <div class="me-3">
+                                <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                    <i class="fas fa-comment-dots text-primary fa-lg"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">AI Mental Health Chat</h5>
+                                <p class="mb-0 text-muted">Talk with our AI assistant about your feelings and concerns.</p>
+                            </div>
+                        </a>
+                        
+                        <a href="{{ url_for('mental_health.meditation') }}" class="list-group-item list-group-item-action bg-transparent d-flex align-items-center">
+                            <div class="me-3">
+                                <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                    <i class="fas fa-cloud text-success fa-lg"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">Meditation & Mindfulness</h5>
+                                <p class="mb-0 text-muted">Guided exercises to reduce stress and improve focus.</p>
+                            </div>
+                        </a>
+                        
+                        <a href="{{ url_for('mental_health.history') }}" class="list-group-item list-group-item-action bg-transparent d-flex align-items-center">
+                            <div class="me-3">
+                                <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                    <i class="fas fa-history text-info fa-lg"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">Chat History</h5>
+                                <p class="mb-0 text-muted">Review your previous mental health conversations.</p>
+                            </div>
+                        </a>
+                        
+                        <div class="list-group-item bg-transparent d-flex align-items-center">
+                            <div class="me-3">
+                                <div class="rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                    <i class="fas fa-phone-alt text-danger fa-lg"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">Crisis Support</h5>
+                                <p class="mb-0 text-muted">Immediate support for mental health emergencies.</p>
+                                <a href="tel:18002738255" class="btn btn-danger mt-2">
+                                    <i class="fas fa-phone-alt me-2"></i>Call Helpline
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mental Health Resources -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="mb-4">Educational Resources</h3>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 bg-dark shadow h-100">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-book-medical text-primary me-2"></i>Understanding Anxiety</h5>
+                    <p class="card-text">Learn about the symptoms, causes, and management techniques for anxiety disorders.</p>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check-circle text-success me-2"></i>Recognize anxiety triggers</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i>Breathing techniques</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i>Cognitive strategies</li>
+                    </ul>
+                    <button class="btn btn-outline-primary mt-2" data-bs-toggle="modal" data-bs-target="#anxietyResourceModal">
+                        Read More
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 bg-dark shadow h-100">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-heart text-danger me-2"></i>Managing Depression</h5>
+                    <p class="card-text">Information about depression, treatment options, and self-care strategies.</p>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check-circle text-success me-2"></i>Recognizing symptoms</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i>Seeking professional help</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i>Daily coping strategies</li>
+                    </ul>
+                    <button class="btn btn-outline-danger mt-2" data-bs-toggle="modal" data-bs-target="#depressionResourceModal">
+                        Read More
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 bg-dark shadow h-100">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-balance-scale text-warning me-2"></i>Stress Management</h5>
+                    <p class="card-text">Effective techniques for managing stress in your daily life.</p>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check-circle text-success me-2"></i>Time management</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i>Relaxation techniques</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i>Setting healthy boundaries</li>
+                    </ul>
+                    <button class="btn btn-outline-warning mt-2" data-bs-toggle="modal" data-bs-target="#stressResourceModal">
+                        Read More
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Professional Help Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 bg-warning bg-opacity-10">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h3 class="card-title text-warning"><i class="fas fa-user-md me-2"></i>Need Professional Support?</h3>
+                            <p class="card-text">While our AI chat can provide assistance, sometimes you may need to speak with a licensed mental health professional.</p>
+                            <p class="mb-md-0">Our platform connects you with qualified psychiatrists and psychologists for virtual or in-person consultations.</p>
+                        </div>
+                        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                            <a href="{{ url_for('patient.doctors') }}?specialty=Psychiatry" class="btn btn-warning btn-lg">
+                                <i class="fas fa-calendar-check me-2"></i>Find a Therapist
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resource Modals -->
+<div class="modal fade" id="anxietyResourceModal" tabindex="-1" aria-labelledby="anxietyResourceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="anxietyResourceModalLabel">Understanding Anxiety</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h4>What is Anxiety?</h4>
+                <p>Anxiety is a normal emotion that everyone experiences at times. Many people feel anxious, or nervous, when faced with a problem at work, before taking a test, or making an important decision. Anxiety disorders, however, are different. They can cause such distress that it interferes with a person's ability to lead a normal life.</p>
+                
+                <h4>Common Types of Anxiety Disorders</h4>
+                <ul>
+                    <li><strong>Generalized Anxiety Disorder (GAD):</strong> Characterized by persistent and excessive worry about various things.</li>
+                    <li><strong>Panic Disorder:</strong> Characterized by recurring panic attacks, which are sudden periods of intense fear.</li>
+                    <li><strong>Social Anxiety Disorder:</strong> Involves high levels of anxiety and fear of being judged or embarrassed in social situations.</li>
+                    <li><strong>Specific Phobias:</strong> Involve intense fear of a specific object or situation.</li>
+                </ul>
+                
+                <h4>Managing Anxiety</h4>
+                <p>There are several strategies that can help manage anxiety:</p>
+                <ol>
+                    <li><strong>Deep Breathing:</strong> Practice deep breathing exercises to calm your nervous system.</li>
+                    <li><strong>Progressive Muscle Relaxation:</strong> Tense and then relax different muscle groups to reduce physical tension.</li>
+                    <li><strong>Cognitive-Behavioral Therapy (CBT):</strong> Work with a therapist to change negative thought patterns.</li>
+                    <li><strong>Mindfulness:</strong> Practice staying present and engaging with the current moment.</li>
+                    <li><strong>Regular Exercise:</strong> Physical activity can help reduce anxiety.</li>
+                    <li><strong>Limit Caffeine and Alcohol:</strong> Both can worsen anxiety symptoms.</li>
+                    <li><strong>Get Enough Sleep:</strong> Sleep deprivation can contribute to anxiety.</li>
+                </ol>
+                
+                <h4>When to Seek Professional Help</h4>
+                <p>It's time to seek professional help if:</p>
+                <ul>
+                    <li>Your anxiety interferes with daily activities</li>
+                    <li>You avoid certain situations due to anxiety</li>
+                    <li>Your anxiety feels uncontrollable</li>
+                    <li>You experience panic attacks</li>
+                    <li>Your anxiety is accompanied by depression</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="{{ url_for('mental_health.chat') }}" class="btn btn-primary">Talk to AI Assistant</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="depressionResourceModal" tabindex="-1" aria-labelledby="depressionResourceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="depressionResourceModalLabel">Managing Depression</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h4>Understanding Depression</h4>
+                <p>Depression (major depressive disorder) is a common and serious medical illness that negatively affects how you feel, the way you think, and how you act. It causes feelings of sadness and/or a loss of interest in activities you once enjoyed. It can lead to a variety of emotional and physical problems and can decrease your ability to function at work and at home.</p>
+                
+                <h4>Symptoms of Depression</h4>
+                <p>Depression symptoms can vary from mild to severe and may include:</p>
+                <ul>
+                    <li>Feeling sad or having a depressed mood</li>
+                    <li>Loss of interest or pleasure in activities once enjoyed</li>
+                    <li>Changes in appetite — weight loss or gain unrelated to dieting</li>
+                    <li>Trouble sleeping or sleeping too much</li>
+                    <li>Loss of energy or increased fatigue</li>
+                    <li>Increase in purposeless physical activity or slowed movements or speech</li>
+                    <li>Feeling worthless or guilty</li>
+                    <li>Difficulty thinking, concentrating, or making decisions</li>
+                    <li>Thoughts of death or suicide</li>
+                </ul>
+                
+                <h4>Treatment Options</h4>
+                <p>Depression is among the most treatable of mental disorders. Between 80% and 90% of people with depression eventually respond well to treatment. Almost all patients gain some relief from their symptoms.</p>
+                
+                <p>Treatment approaches include:</p>
+                <ul>
+                    <li><strong>Medication:</strong> Antidepressants may be prescribed by a physician.</li>
+                    <li><strong>Psychotherapy:</strong> Talk therapy, such as cognitive-behavioral therapy (CBT).</li>
+                    <li><strong>Combination:</strong> For many, a combination of medication and therapy is most effective.</li>
+                </ul>
+                
+                <h4>Self-Care Strategies</h4>
+                <p>While professional treatment is often necessary, self-care strategies can also help manage depression:</p>
+                <ul>
+                    <li>Establish a routine and set goals, even small ones</li>
+                    <li>Exercise regularly, even if it's just a walk</li>
+                    <li>Eat healthy, balanced meals</li>
+                    <li>Get enough sleep</li>
+                    <li>Challenge negative thoughts</li>
+                    <li>Avoid alcohol and recreational drugs</li>
+                    <li>Connect with others and talk about your feelings</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="{{ url_for('mental_health.chat') }}" class="btn btn-danger">Talk to AI Assistant</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="stressResourceModal" tabindex="-1" aria-labelledby="stressResourceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="stressResourceModalLabel">Stress Management</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h4>Understanding Stress</h4>
+                <p>Stress is your body's response to anything that requires attention or action. It's a normal part of life, and in small doses, it can be positive – helping you stay focused and alert. However, chronic stress can have negative effects on your physical and mental health.</p>
+                
+                <h4>Common Sources of Stress</h4>
+                <ul>
+                    <li>Work or school pressures</li>
+                    <li>Financial concerns</li>
+                    <li>Relationship difficulties</li>
+                    <li>Family responsibilities</li>
+                    <li>Health concerns</li>
+                    <li>Major life changes</li>
+                </ul>
+                
+                <h4>Effective Stress Management Techniques</h4>
+                
+                <h5>Physical Techniques:</h5>
+                <ul>
+                    <li><strong>Regular exercise:</strong> Physical activity reduces stress hormones and releases endorphins.</li>
+                    <li><strong>Deep breathing:</strong> Slow, deep breaths can help activate your body's relaxation response.</li>
+                    <li><strong>Progressive muscle relaxation:</strong> Tensing and then relaxing different muscle groups.</li>
+                    <li><strong>Adequate sleep:</strong> Ensuring you get enough quality sleep each night.</li>
+                    <li><strong>Healthy diet:</strong> Proper nutrition helps your body handle stress better.</li>
+                </ul>
+                
+                <h5>Mental and Emotional Techniques:</h5>
+                <ul>
+                    <li><strong>Mindfulness meditation:</strong> Focusing on the present moment without judgment.</li>
+                    <li><strong>Journaling:</strong> Writing down thoughts and feelings to process them.</li>
+                    <li><strong>Positive reframing:</strong> Changing how you think about stressful situations.</li>
+                    <li><strong>Time management:</strong> Prioritizing tasks and breaking them into manageable steps.</li>
+                    <li><strong>Setting boundaries:</strong> Learning to say no and establishing healthy limits.</li>
+                </ul>
+                
+                <h5>Social Techniques:</h5>
+                <ul>
+                    <li><strong>Social connection:</strong> Spending time with supportive friends and family.</li>
+                    <li><strong>Seeking support:</strong> Talking about your stress with trusted individuals.</li>
+                    <li><strong>Volunteering:</strong> Helping others can provide perspective and reduce stress.</li>
+                </ul>
+                
+                <h4>Building a Stress Management Plan</h4>
+                <p>An effective stress management plan should:</p>
+                <ol>
+                    <li>Identify your stress triggers</li>
+                    <li>Recognize your stress responses</li>
+                    <li>Develop healthy coping strategies</li>
+                    <li>Practice these strategies regularly, not just during stressful times</li>
+                    <li>Evaluate and adjust your plan as needed</li>
+                </ol>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="{{ url_for('mental_health.chat') }}" class="btn btn-warning">Talk to AI Assistant</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
